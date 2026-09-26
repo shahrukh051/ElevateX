@@ -52,7 +52,7 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps) {
       {/* Hero greeting bar */}
       <div className="ov-hero">
         <div className="ov-hero-left">
-          <div className="ov-hero-greeting">Good {getGreeting()}, Daniel 👋</div>
+          <div className="ov-hero-greeting">Good {getGreeting()}, Shahrukh 👋</div>
           <div className="ov-hero-sub">
             Here's your ElevateX Jaipur fleet at a glance —
             <strong> {activeVehicles.length} vehicles</strong> active,

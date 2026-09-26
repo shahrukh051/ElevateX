@@ -27,20 +27,58 @@ export default function App() {
   const [activePage, setActivePage] = useState<Page>("overview");
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
-  const [liveTime, setLiveTime] = useState(() =>
-    new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " IST"
-  );
+  const [liveTime, setLiveTime] = useState("--:--:-- IST");
+  const [clockSynced, setClockSynced] = useState(false);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const syncedBaseRef = useRef<number | null>(null); // server epoch ms at sync time
+  const syncedAtRef = useRef<number | null>(null);   // local performance.now() at sync time
 
   const activeIncidentCount = accidentEvents.filter((e) => e.status !== "resolved").length;
 
-  // Live clock
+  // TimeAPI-synced live clock
   useEffect(() => {
-    clockRef.current = setInterval(() => {
-      setLiveTime(
-        new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " IST"
-      );
-    }, 1000);
+    function formatIST(epochMs: number): string {
+      // IST = UTC + 5h30m
+      const istMs = epochMs + 5.5 * 60 * 60 * 1000;
+      const d = new Date(istMs);
+      const hh = String(d.getUTCHours()).padStart(2, "0");
+      const mm = String(d.getUTCMinutes()).padStart(2, "0");
+      const ss = String(d.getUTCSeconds()).padStart(2, "0");
+      return `${hh}:${mm}:${ss} IST`;
+    }
+
+    function startTicking() {
+      if (clockRef.current) clearInterval(clockRef.current);
+      clockRef.current = setInterval(() => {
+        if (syncedBaseRef.current !== null && syncedAtRef.current !== null) {
+          const elapsed = performance.now() - syncedAtRef.current;
+          setLiveTime(formatIST(syncedBaseRef.current + elapsed));
+        } else {
+          // fallback: local time
+          setLiveTime(
+            new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " IST"
+          );
+        }
+      }, 1000);
+    }
+
+    // Fetch accurate time from TimeAPI
+    fetch("https://timeapi.io/api/v1/time/current/utc")
+      .then((res) => res.json())
+      .then((data: { utc_time: string }) => {
+        const serverEpoch = new Date(data.utc_time).getTime();
+        syncedBaseRef.current = serverEpoch;
+        syncedAtRef.current = performance.now();
+        setLiveTime(formatIST(serverEpoch));
+        setClockSynced(true);
+        startTicking();
+      })
+      .catch(() => {
+        // API failed — fall back to local clock
+        setClockSynced(false);
+        startTicking();
+      });
+
     return () => { if (clockRef.current) clearInterval(clockRef.current); };
   }, []);
 
@@ -135,7 +173,7 @@ export default function App() {
 
         {/* Bottom Rail Profile & Settings */}
         <div className="rail-bottom">
-          <div className="rail-avatar-wrap" title="Admin: Daniel Osonuga">
+          <div className="rail-avatar-wrap" title="Admin: Shahrukh">
             <img
               src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=faces"
               alt="Admin"
@@ -212,8 +250,9 @@ export default function App() {
               <span className="sth-status-fleet">{vehicles.length} Vehicles Online</span>
             </div>
 
-            {/* Current Time */}
-            <div className="sth-clock-chip">
+            {/* Current Time — synced from timeapi.io */}
+            <div className="sth-clock-chip" title={clockSynced ? "Synced from timeapi.io" : "Local clock (API unavailable)"}>
+              <span className={`sth-clock-sync-dot ${clockSynced ? "sth-clock-sync-dot--synced" : "sth-clock-sync-dot--local"}`} />
               {liveTime}
             </div>
 
@@ -232,8 +271,8 @@ export default function App() {
 
             {/* User Profile Pill (Image 1) */}
             <div className="sth-profile-pill">
-              <span className="sth-avatar-circle">DO</span>
-              <span className="sth-user-name">Daniel Osonuga</span>
+              <span className="sth-avatar-circle">SK</span>
+              <span className="sth-user-name">Shahrukh</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5">
                 <path d="M6 9l6 6 6-6"/>
               </svg>
