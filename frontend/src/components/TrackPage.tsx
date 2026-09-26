@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useRouteStore } from "../store/useRouteStore";
 import { useLogisticsStore, seedParcels, getDriverProfile } from "../store/useLogisticsStore";
 import MapView from "./MapView";
+import { MapWeatherOverlay } from "./WeatherWidget";
 import type { ClientMessage } from "../types";
 
 interface TrackPageProps {
@@ -300,6 +301,7 @@ export default function TrackPage({ sendMessage }: TrackPageProps) {
 
       {/* ── Center Column: Interactive Map with Floating Popover ── */}
       <section className="track-map-container">
+        <MapWeatherOverlay />
         <MapView onSimulateAccident={handleBreakdownTrigger} />
       </section>
 

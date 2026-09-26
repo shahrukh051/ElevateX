@@ -1,5 +1,6 @@
 import { useRouteStore } from "../store/useRouteStore";
 import { useLogisticsStore, seedParcels } from "../store/useLogisticsStore";
+import { useWeather } from "../hooks/useWeather";
 import type { ClientMessage } from "../types";
 import { useState } from "react";
 
@@ -41,6 +42,32 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
   const selectedSegmentIsActive = activeSegments.some(
     (s) => s.from === segmentFrom && s.to === segmentTo
   );
+
+  // Weather & Road Impact
+  const { weather, loading: weatherLoading } = useWeather("Jaipur");
+  const [weatherAlert, setWeatherAlert] = useState<string | null>(null);
+
+  function simulateWeatherImpact(severity: "monsoon" | "fog") {
+    if (activeSegments.length === 0) {
+      setWeatherAlert("No active delivery segments found to apply weather slowdown to.");
+      setTimeout(() => setWeatherAlert(null), 5000);
+      return;
+    }
+    const mult = severity === "monsoon" ? 2.5 : 1.8;
+    const target = activeSegments[0];
+    sendMessage({
+      type: "trigger_traffic_delay",
+      segmentFrom: target.from,
+      segmentTo: target.to,
+      multiplier: mult,
+    });
+    setWeatherAlert(
+      severity === "monsoon"
+        ? `🌧️ Monsoon Downpour simulated on ${target.from} → ${target.to} (2.5x travel time). Re-routing in progress!`
+        : `🌫️ Dense Fog simulated on ${target.from} → ${target.to} (1.8x travel time). Safety buffers increased!`
+    );
+    setTimeout(() => setWeatherAlert(null), 7000);
+  }
 
   // New order
   const [orderLat, setOrderLat] = useState("26.9157");
@@ -98,6 +125,14 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
           <span>⚠️</span>
           <span>{accidentAlert}</span>
           <button onClick={() => setAccidentAlert(null)}>✕</button>
+        </div>
+      )}
+
+      {weatherAlert && (
+        <div className="disruptions-alert disruptions-alert--cyan">
+          <span>⛅</span>
+          <span>{weatherAlert}</span>
+          <button onClick={() => setWeatherAlert(null)}>✕</button>
         </div>
       )}
 
@@ -265,6 +300,58 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
           >
             🕐 Update Window
           </button>
+        </div>
+
+        {/* Weather Disruption Simulator */}
+        <div className="disr-card disr-card--cyan">
+          <div className="disr-card__icon">⛈️</div>
+          <div className="disr-card__title">Live Weather & Road Condition</div>
+          <div className="disr-card__desc">
+            Monitor real-time OpenWeatherMap data for Jaipur and simulate meteorological delays on active routes.
+          </div>
+          <div className="disr-card__body">
+            {weather ? (
+              <div className="disr-weather-snapshot">
+                <div className="dws-row">
+                  <img src={weather.iconUrl} alt={weather.description} className="dws-icon" width="28" height="28" />
+                  <span className="dws-temp">{Math.round(weather.temp)}°C · {weather.condition}</span>
+                  <span className={`dws-badge dws-badge--${weather.roadConditionClass}`}>{weather.roadCondition}</span>
+                </div>
+                <div className="dws-stats">
+                  <span>💧 {weather.humidity}% Hum</span>
+                  <span>·</span>
+                  <span>💨 {weather.windSpeed} km/h</span>
+                  <span>·</span>
+                  <span>👁️ {weather.visibility} km Vis</span>
+                </div>
+                <div className="dws-advisory">{weather.fleetAdvisory}</div>
+              </div>
+            ) : (
+              <div className="dws-loading">
+                {weatherLoading ? "Connecting to OpenWeatherMap…" : "Weather data ready"}
+              </div>
+            )}
+          </div>
+          <div className="disr-weather-btn-row">
+            <button
+              id="simulate-monsoon-btn"
+              type="button"
+              className="disr-btn disr-btn--cyan"
+              disabled={activeSegments.length === 0}
+              onClick={() => simulateWeatherImpact("monsoon")}
+            >
+              🌧️ Simulate Monsoon (2.5x Delay)
+            </button>
+            <button
+              id="simulate-fog-btn"
+              type="button"
+              className="disr-btn disr-btn--slate"
+              disabled={activeSegments.length === 0}
+              onClick={() => simulateWeatherImpact("fog")}
+            >
+              🌫️ Simulate Fog (1.8x Delay)
+            </button>
+          </div>
         </div>
       </div>
 

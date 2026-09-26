@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useRouteStore } from "../store/useRouteStore";
 import { useLogisticsStore, getDriverProfile } from "../store/useLogisticsStore";
+import { OverviewWeatherCard } from "./WeatherWidget";
 import type { ClientMessage } from "../types";
 
 type Page = "overview" | "track" | "orders" | "disruptions";
@@ -73,6 +74,9 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps) {
           )}
         </div>
       </div>
+
+      {/* Live Fleet Weather & Road Impact Alert */}
+      <OverviewWeatherCard />
 
       {/* Main KPI Row */}
       <div className="ov-kpi-row">

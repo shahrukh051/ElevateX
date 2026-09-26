@@ -7,6 +7,7 @@ import OrdersPage from "./components/OrdersPage";
 import DisruptionsPage from "./components/DisruptionsPage";
 import OverviewPage from "./components/OverviewPage";
 import AddOrderModal from "./components/AddOrderModal";
+import { HeaderWeatherPill } from "./components/WeatherWidget";
 import "./App.css";
 
 type Page = "overview" | "track" | "orders" | "disruptions";
@@ -255,6 +256,9 @@ export default function App() {
               <span className={`sth-clock-sync-dot ${clockSynced ? "sth-clock-sync-dot--synced" : "sth-clock-sync-dot--local"}`} />
               {liveTime}
             </div>
+
+            {/* Live Weather Pill from OpenWeatherMap */}
+            <HeaderWeatherPill />
 
             {/* Add Order Button */}
             <button
