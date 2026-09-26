@@ -74,11 +74,10 @@ export default function QuickActions({ sendMessage }: QuickActionsProps) {
       <button
         id="reset-fleet-btn"
         type="button"
-        className={`qa-btn qa-btn--primary ${resetting ? "qa-btn--active" : ""}`}
-        style={{ background: "linear-gradient(135deg, #7c3aed, #8b5cf6)" }}
+        className="qa-btn"
         onClick={handleReset}
         disabled={resetting}
-        title="Restore all vehicles to active and reset routes"
+        title="Restore all vehicles to active and reset Jaipur live map state"
       >
         <span className="qa-btn__icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
@@ -90,18 +89,18 @@ export default function QuickActions({ sendMessage }: QuickActionsProps) {
         </span>
         <span className="qa-btn__text">
           <span className="qa-btn__title">{resetting ? "Resetting…" : "Reset Fleet"}</span>
-          <span className="qa-btn__desc">Restore all vehicles to active.</span>
+          <span className="qa-btn__desc">Restore Jaipur live map state</span>
         </span>
       </button>
 
-      {/* Re-optimize now */}
+      {/* Re-optimize Route — highlighted */}
       <button
         id="reoptimize-btn"
         type="button"
-        className="qa-btn qa-btn--primary"
+        className="qa-btn qa-btn--highlight"
         disabled={reoptimizing}
         onClick={handleReoptimize}
-        title="Force a route re-optimization"
+        title="Force re-optimization of active Jaipur delivery routes"
       >
         <span className="qa-btn__icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
@@ -111,8 +110,8 @@ export default function QuickActions({ sendMessage }: QuickActionsProps) {
           </svg>
         </span>
         <span className="qa-btn__text">
-          <span className="qa-btn__title">{reoptimizing ? "Re-optimizing…" : "Re-optimize now"}</span>
-          <span className="qa-btn__desc">Force route recalculation.</span>
+          <span className="qa-btn__title">{reoptimizing ? "Re-optimizing…" : "Re-optimize Route"}</span>
+          <span className="qa-btn__desc">Recalculate active Jaipur delivery</span>
         </span>
       </button>
 
@@ -123,18 +122,18 @@ export default function QuickActions({ sendMessage }: QuickActionsProps) {
         className="qa-btn"
         disabled={syncing}
         onClick={handleSync}
-        title="Sync latest vehicle data from server"
+        title="Refresh fleet telemetry from server"
       >
         <span className="qa-btn__icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-            style={{ color: syncing ? "var(--accent-live)" : "var(--text-dim)", animation: syncing ? "spin 1s linear infinite" : "none" }}>
+            style={{ animation: syncing ? "spin 1s linear infinite" : "none" }}>
             <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
             <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
           </svg>
         </span>
         <span className="qa-btn__text">
-          <span className="qa-btn__title">{syncing ? "Syncing…" : "Sync vehicle data"}</span>
-          <span className="qa-btn__desc">Fetch latest status from server.</span>
+          <span className="qa-btn__title">{syncing ? "Syncing…" : "Sync Vehicle Data"}</span>
+          <span className="qa-btn__desc">Refresh fleet telemetry</span>
         </span>
       </button>
 
@@ -145,20 +144,17 @@ export default function QuickActions({ sendMessage }: QuickActionsProps) {
         className="qa-btn"
         disabled={clearing}
         onClick={handleClear}
-        title="Remove all priority orders and clear the re-optimization log"
+        title="Remove resolved road alerts from Jaipur routes"
       >
         <span className="qa-btn__icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-            style={{ color: clearing ? "var(--accent-alert)" : "var(--text-dim)" }}>
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6l-1 14H6L5 6"/>
-            <path d="M10 11v6M14 11v6"/>
-            <path d="M9 6V4h6v2"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
           </svg>
         </span>
         <span className="qa-btn__text">
-          <span className="qa-btn__title">{clearing ? "Clearing…" : "Clear disruptions"}</span>
-          <span className="qa-btn__desc">Remove priority orders & log.</span>
+          <span className="qa-btn__title">{clearing ? "Clearing…" : "Clear Disruptions"}</span>
+          <span className="qa-btn__desc">Remove resolved road alerts</span>
         </span>
       </button>
 
