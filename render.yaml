@@ -11,14 +11,14 @@ services:
     name: elevatex-frontend
     runtime: static
     rootDir: frontend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && VITE_WS_URL="wss://${BACKEND_HOST}/ws" npm run build
     staticPublishPath: dist
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
     envVars:
-      - key: VITE_WS_URL
+      - key: BACKEND_HOST
         fromService:
           type: web
           name: elevatex-backend
