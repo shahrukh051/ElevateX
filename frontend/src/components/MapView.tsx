@@ -610,7 +610,6 @@ export default function MapView({ onSimulateAccident }: { onSimulateAccident?: (
               (e) => e.vehicleId === vehicle.id && e.status !== "resolved"
             );
             const bearing = vehicle.bearing ?? 0;
-            const profile = getDriverProfile(vehicle.id);
 
             return (
               <g

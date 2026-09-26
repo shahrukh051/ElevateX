@@ -4,19 +4,12 @@ import { useLogisticsStore, seedParcels, getDriverProfile } from "../store/useLo
 import MapView from "./MapView";
 import type { ClientMessage } from "../types";
 
-const VEHICLE_COLORS = [
-  "#10b981", "#3b82f6", "#8b5cf6", "#f59e0b",
-  "#06b6d4", "#f97316", "#ec4899", "#14b8a6",
-];
-
 interface TrackPageProps {
   sendMessage: (msg: ClientMessage) => void;
 }
 
 export default function TrackPage({ sendMessage }: TrackPageProps) {
   const vehicles = useRouteStore((s) => s.vehicles);
-  const stops = useRouteStore((s) => s.stops);
-  const currentSolution = useRouteStore((s) => s.currentSolution);
   const {
     selectedVehicleId,
     setSelectedVehicle,
@@ -39,12 +32,7 @@ export default function TrackPage({ sendMessage }: TrackPageProps) {
     nearestDist: number;
   } | null>(null);
 
-  const sortedIds = useMemo(() => [...vehicles.map((v) => v.id)].sort(), [vehicles]);
 
-  function colorFor(id: string) {
-    const i = sortedIds.indexOf(id);
-    return VEHICLE_COLORS[i % VEHICLE_COLORS.length];
-  }
 
   // Trigger accident logic
   function handleBreakdownTrigger(vehicleId: string) {
@@ -94,9 +82,7 @@ export default function TrackPage({ sendMessage }: TrackPageProps) {
   // Selected vehicle & manifest
   const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId);
   const selectedProfile = selectedVehicle ? getDriverProfile(selectedVehicle.id) : null;
-  const activeAccidentForSelected = accidentEvents.find(
-    (e) => e.vehicleId === selectedVehicleId && e.status !== "resolved"
-  );
+
 
   // Manifest parcels for the right Activity panel
   const displayParcels = useMemo(() => {
@@ -209,7 +195,7 @@ export default function TrackPage({ sendMessage }: TrackPageProps) {
             const hasAccident = accidentEvents.some(
               (e) => e.vehicleId === vehicle.id && e.status !== "resolved"
             );
-            const color = colorFor(vehicle.id);
+
 
             // Status label
             let statusBadge = (

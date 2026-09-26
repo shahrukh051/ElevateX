@@ -146,7 +146,7 @@ export default function OrdersPage() {
 
       {/* Vehicle Manifest Blocks (Image 2 Operations List inspired) */}
       <div className="op-vehicle-blocks">
-        {vehicleData.map(({ vehicle, profile, stopIds, vParcels, capacityPct, color, hasAccident }) => {
+        {vehicleData.map(({ vehicle, profile, vParcels, capacityPct, color, hasAccident }) => {
           const visibleParcels = vParcels.filter((p) => {
             const matchesSearch =
               p.orderId.toLowerCase().includes(filterSearch.toLowerCase()) ||
