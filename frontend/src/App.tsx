@@ -174,7 +174,7 @@ export default function App() {
 
         {/* Bottom Rail Profile & Settings */}
         <div className="rail-bottom">
-          <div className="rail-avatar-wrap" title="Admin: Shahrukh">
+          <div className="rail-avatar-wrap" title="ElevateX Ops">
             <img
               src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=faces"
               alt="Admin"
@@ -275,8 +275,8 @@ export default function App() {
 
             {/* User Profile Pill (Image 1) */}
             <div className="sth-profile-pill">
-              <span className="sth-avatar-circle">SK</span>
-              <span className="sth-user-name">Shahrukh</span>
+              <span className="sth-avatar-circle">EX</span>
+              <span className="sth-user-name">ElevateX</span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5">
                 <path d="M6 9l6 6 6-6"/>
               </svg>
