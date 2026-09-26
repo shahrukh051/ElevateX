@@ -97,29 +97,40 @@ async def geocode(address: str) -> tuple[float, float]:
 
 
 async def get_route_matrix(points: list[tuple[float, float]]) -> list[list[float]]:
-    """Return travel times in seconds; falls back to a deterministic local estimate."""
-    if not 1 <= len(points) <= 20:
-        raise ValueError("Route matrix supports between 1 and 20 points")
+    """Return an NxN travel-time matrix (seconds). Supports any number of points.
+
+    Falls back to haversine-based local estimation; chunks API calls to <=20
+    points when a valid Google Maps key is present.
+    """
+    n = len(points)
+    if n == 0:
+        return []
+
     if GOOGLE_MAPS_API_KEY:
         try:
-            body = {
-                "origins": [{"waypoint": {"location": {"latLng": {"latitude": lat, "longitude": lng}}}} for lat, lng in points],
-                "destinations": [{"waypoint": {"location": {"latLng": {"latitude": lat, "longitude": lng}}}} for lat, lng in points],
-                "travelMode": "DRIVE",
-                "routingPreference": "TRAFFIC_AWARE",
-            }
-            headers = {"X-Goog-Api-Key": GOOGLE_MAPS_API_KEY, "X-Goog-FieldMask": "originIndex,destinationIndex,duration"}
-            async with httpx.AsyncClient(timeout=20) as client:
-                response = await client.post("https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix", json=body, headers=headers)
-                response.raise_for_status()
-                payload = response.json()
-            result = [[0.0 for _ in points] for _ in points]
-            for item in payload:
-                duration = item.get("duration", "0s").removesuffix("s")
-                result[item["originIndex"]][item["destinationIndex"]] = float(duration)
+            result = [[0.0] * n for _ in range(n)]
+            chunk = 20
+            for r0 in range(0, n, chunk):
+                r1 = min(r0 + chunk, n)
+                for c0 in range(0, n, chunk):
+                    c1 = min(c0 + chunk, n)
+                    body = {
+                        "origins": [{"waypoint": {"location": {"latLng": {"latitude": lat, "longitude": lng}}}} for lat, lng in points[r0:r1]],
+                        "destinations": [{"waypoint": {"location": {"latLng": {"latitude": lat, "longitude": lng}}}} for lat, lng in points[c0:c1]],
+                        "travelMode": "DRIVE",
+                        "routingPreference": "TRAFFIC_AWARE",
+                    }
+                    headers = {"X-Goog-Api-Key": GOOGLE_MAPS_API_KEY, "X-Goog-FieldMask": "originIndex,destinationIndex,duration"}
+                    async with httpx.AsyncClient(timeout=20) as client:
+                        resp = await client.post("https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix", json=body, headers=headers)
+                        resp.raise_for_status()
+                        for item in resp.json():
+                            secs = float(item.get("duration", "0s").removesuffix("s"))
+                            result[r0 + item["originIndex"]][c0 + item["destinationIndex"]] = secs
             return result
         except Exception as error:
             logger.warning("Google Routes API computeRouteMatrix failed (%s); falling back to local travel times", error)
+
     return [[0.0 if i == j else _haversine_km(a, b) / 28 * 3600 for j, b in enumerate(points)] for i, a in enumerate(points)]
 
 

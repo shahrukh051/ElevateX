@@ -103,7 +103,15 @@ async def process_event(event: dict, broadcast) -> None:
             if vehicle_id in world_state.vehicles:
                 world_state.vehicles[vehicle_id].status = "unavailable"
         elif kind == "trigger_new_order":
-            incoming = {**event["stop"], "priority": "high"}
+            raw_stop = event.get("stop", {})
+            # Guard: lat/lng must be valid floats before we touch Pydantic
+            try:
+                raw_stop["lat"] = float(raw_stop["lat"])
+                raw_stop["lng"] = float(raw_stop["lng"])
+            except (TypeError, ValueError, KeyError):
+                logger.warning("trigger_new_order ignored: lat/lng missing or invalid in payload %s", raw_stop)
+                return
+            incoming = {**raw_stop, "priority": raw_stop.get("priority", "high")}
             stop = Stop(id=f"P-{uuid4().hex[:4].upper()}", **incoming)
             world_state.stops[stop.id] = stop
             event["stopId"] = stop.id
@@ -193,7 +201,7 @@ def _reset_changed_legs(old: Solution, new: Solution, node_ids: list[str]) -> No
             continue
         vehicle = world_state.vehicles[route.vehicle_id]
         target = world_state.stops[route.stop_ids[0]]
-        duration = max(2.5, world_state.travel_times.get((route.vehicle_id, target.id), 90.0))
+        duration = max(4.0, min(world_state.travel_times.get((route.vehicle_id, target.id), 25.0) * 0.15, 12.0))
         world_state.legs[route.vehicle_id] = LegState(
             points=[(vehicle.current_lat, vehicle.current_lng), (target.lat, target.lng)], start_time=datetime.now(timezone.utc),
             duration_seconds=duration, target_stop_id=target.id,

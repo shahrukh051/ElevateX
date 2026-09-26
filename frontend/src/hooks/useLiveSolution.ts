@@ -47,7 +47,7 @@ export function useLiveSolution() {
           applySolutionUpdate(message.solution, message.explanation);
           break;
         case "vehicle_position":
-          updateVehiclePosition(message.vehicleId, message.lat, message.lng);
+          updateVehiclePosition(message.vehicleId, message.lat, message.lng, message.bearing);
           break;
         default:
           console.warn("useLiveSolution: unknown message type", message);

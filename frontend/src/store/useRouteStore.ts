@@ -13,9 +13,10 @@ interface RouteState {
 
   setInitialState: (stops: Stop[], vehicles: Vehicle[], solution: Solution) => void;
   applySolutionUpdate: (solution: Solution, explanation: ExplanationEvent) => void;
-  updateVehiclePosition: (vehicleId: string, lat: number, lng: number) => void;
+  updateVehiclePosition: (vehicleId: string, lat: number, lng: number, bearing?: number) => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
   addPendingStop: (stop: Omit<Stop, "id">) => void;
+  clearExplanations: () => void;
 }
 
 /**
@@ -48,16 +49,26 @@ export const useRouteStore = create<RouteState>((set) => ({
       };
     }),
 
-  updateVehiclePosition: (vehicleId, lat, lng) =>
+  updateVehiclePosition: (vehicleId, lat, lng, bearing) =>
     set((state) => ({
       vehicles: state.vehicles.map((v) =>
-        v.id === vehicleId ? { ...v, currentLat: lat, currentLng: lng } : v
+        v.id === vehicleId
+          ? {
+              ...v,
+              currentLat: lat,
+              currentLng: lng,
+              bearing: bearing !== undefined ? bearing : v.bearing,
+            }
+          : v
       ),
     })),
 
   setConnectionStatus: (status) => set({ connectionStatus: status }),
+
   addPendingStop: (stop) => set((state) => {
     const id = `pending-${Date.now()}-${state.pendingStopIds.length}`;
     return { pendingStopIds: [...state.pendingStopIds, id], stops: [...state.stops, { ...stop, id }] };
   }),
+
+  clearExplanations: () => set({ explanationFeed: [] }),
 }));

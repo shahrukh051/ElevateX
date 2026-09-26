@@ -15,6 +15,7 @@ export interface Vehicle {
   status: "active" | "unavailable";
   currentLat: number;
   currentLng: number;
+  bearing?: number;
 }
 
 export interface RouteAssignment {
@@ -39,7 +40,7 @@ export interface ExplanationEvent {
 // WebSocket messages from backend (discriminated union)
 export type ServerMessage =
   | { type: "solution_update"; solution: Solution; explanation: ExplanationEvent }
-  | { type: "vehicle_position"; vehicleId: string; lat: number; lng: number }
+  | { type: "vehicle_position"; vehicleId: string; lat: number; lng: number; bearing?: number }
   | { type: "initial_state"; stops: Stop[]; vehicles: Vehicle[]; solution: Solution };
 
 // Messages sent to backend to trigger events

@@ -56,4 +56,5 @@ class VehiclePositionMessage(BaseModel):
     vehicle_id: str = Field(alias="vehicleId")
     lat: float
     lng: float
+    bearing: float = 0.0
     model_config = ConfigDict(populate_by_name=True)
