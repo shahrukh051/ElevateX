@@ -202,9 +202,11 @@ export default function MapView() {
   }, []);
 
   // Map mode: "vector" (custom high-fps SVG canvas) or "google" (Google Maps)
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY as string | undefined;
+  const apiKey =
+    (import.meta.env.VITE_GOOGLE_MAPS_KEY as string | undefined)?.trim() ||
+    "AIzaSyCuK2tdlCHHJGXf-JzvhSXOQf5aFckrFtw";
   const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID as string | undefined;
-  const [mapMode, setMapMode] = useState<"vector" | "google">("vector");
+  const [mapMode, setMapMode] = useState<"vector" | "google">("google");
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
 
   const vehicleIds = useMemo(() => vehicles.map((v) => v.id), [vehicles]);

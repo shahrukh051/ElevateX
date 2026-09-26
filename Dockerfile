@@ -4,6 +4,7 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ ./
+ENV VITE_GOOGLE_MAPS_KEY="AIzaSyCuK2tdlCHHJGXf-JzvhSXOQf5aFckrFtw"
 RUN npm run build
 
 # Stage 2: Unified Backend & Frontend Service (Python 3.12 & FastAPI)
