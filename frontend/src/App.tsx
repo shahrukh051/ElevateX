@@ -1,14 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLiveSolution } from "./hooks/useLiveSolution";
 import { useRouteStore } from "./store/useRouteStore";
 import { useLogisticsStore, seedParcels } from "./store/useLogisticsStore";
 import TrackPage from "./components/TrackPage";
 import OrdersPage from "./components/OrdersPage";
 import DisruptionsPage from "./components/DisruptionsPage";
+import OverviewPage from "./components/OverviewPage";
 import AddOrderModal from "./components/AddOrderModal";
 import "./App.css";
 
-type Page = "track" | "orders" | "disruptions";
+type Page = "overview" | "track" | "orders" | "disruptions";
+
+const PAGE_TITLES: Record<Page, string> = {
+  overview: "Fleet Overview",
+  track: "Live Dispatch Map",
+  orders: "Fleet Manifest",
+  disruptions: "Disruption Control",
+};
 
 export default function App() {
   const { sendMessage } = useLiveSolution();
@@ -16,14 +24,25 @@ export default function App() {
   const vehicles = useRouteStore((s) => s.vehicles);
   const parcels = useLogisticsStore((s) => s.parcels);
   const accidentEvents = useLogisticsStore((s) => s.accidentEvents);
-  const [activePage, setActivePage] = useState<Page>("track");
+  const [activePage, setActivePage] = useState<Page>("overview");
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
+  const [liveTime, setLiveTime] = useState(() =>
+    new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " IST"
+  );
+  const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const activeIncidentCount = accidentEvents.filter((e) => e.status !== "resolved").length;
 
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) + " IST";
+  // Live clock
+  useEffect(() => {
+    clockRef.current = setInterval(() => {
+      setLiveTime(
+        new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " IST"
+      );
+    }, 1000);
+    return () => { if (clockRef.current) clearInterval(clockRef.current); };
+  }, []);
 
   // Seed parcels when vehicles load
   useEffect(() => {
@@ -46,10 +65,26 @@ export default function App() {
               <rect x="13" y="13" width="9" height="9" rx="2.5" fill="#f59e0b" />
             </svg>
           </div>
+          <span className="rail-brand-label">EX</span>
         </div>
 
         {/* Navigation Rail Buttons */}
         <nav className="rail-nav">
+          {/* 0. Overview / Dashboard */}
+          <button
+            className={`rail-nav-btn ${activePage === "overview" ? "rail-nav-btn--active" : ""}`}
+            onClick={() => setActivePage("overview")}
+            title="Fleet Overview Dashboard"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+            <span className="rail-tooltip">Overview</span>
+          </button>
+
           {/* 1. Track / Live Map */}
           <button
             className={`rail-nav-btn ${activePage === "track" ? "rail-nav-btn--active" : ""}`}
@@ -76,7 +111,7 @@ export default function App() {
               <circle cx="5.5" cy="18.5" r="2.5"/>
               <circle cx="18.5" cy="18.5" r="2.5"/>
             </svg>
-            <span className="rail-badge">{parcels.length || 24}</span>
+            {parcels.length > 0 && <span className="rail-badge">{parcels.length}</span>}
             <span className="rail-tooltip">Orders</span>
           </button>
 
@@ -121,6 +156,35 @@ export default function App() {
       <div className="saas-main-area">
         {/* Top Header Bar (Image 1 & 4) */}
         <header className="saas-top-header">
+          {/* Page Title */}
+          <div className="sth-page-title">
+            <span className="sth-page-icon">
+              {activePage === "overview" && (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+              )}
+              {activePage === "track" && (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                </svg>
+              )}
+              {activePage === "orders" && (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <rect x="1" y="3" width="15" height="13"/>
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                </svg>
+              )}
+              {activePage === "disruptions" && (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+              )}
+            </span>
+            <h1 className="sth-page-name">{PAGE_TITLES[activePage]}</h1>
+          </div>
+
           {/* Search Box */}
           <div className="sth-search-box">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2">
@@ -150,7 +214,7 @@ export default function App() {
 
             {/* Current Time */}
             <div className="sth-clock-chip">
-              {timeStr}
+              {liveTime}
             </div>
 
             {/* Add Order Button */}
@@ -179,6 +243,7 @@ export default function App() {
 
         {/* Dynamic Page Component */}
         <main className="saas-body-view">
+          {activePage === "overview" && <OverviewPage onNavigate={setActivePage} sendMessage={sendMessage} />}
           {activePage === "track" && <TrackPage sendMessage={sendMessage} />}
           {activePage === "orders" && <OrdersPage />}
           {activePage === "disruptions" && <DisruptionsPage sendMessage={sendMessage} />}
