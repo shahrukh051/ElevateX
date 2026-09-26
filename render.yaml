@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: elevatex-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: FRONTEND_ORIGIN
+        value: "*"
+
+  - type: web
+    name: elevatex-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_WS_URL
+        fromService:
+          type: web
+          name: elevatex-backend
+          property: host
