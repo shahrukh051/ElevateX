@@ -2,8 +2,30 @@ import { useCallback, useEffect, useRef } from "react";
 import { useRouteStore } from "../store/useRouteStore";
 import type { ClientMessage, ServerMessage } from "../types";
 
-const WS_URL = (import.meta.env.VITE_WS_URL as string | undefined) ?? "ws://localhost:8000/ws";
-const RECONNECT_DELAY_MS = 2000;
+const RECONNECT_DELAY_MS = 2500;
+
+function getWebSocketUrl(): string {
+  const envUrl = (import.meta.env.VITE_WS_URL as string | undefined)?.trim();
+  if (
+    envUrl &&
+    envUrl !== "wss:///ws" &&
+    envUrl !== "ws:///ws" &&
+    !envUrl.includes("${")
+  ) {
+    return envUrl;
+  }
+
+  if (typeof window !== "undefined") {
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "ws://localhost:8000/ws";
+    }
+    const isHttps = window.location.protocol === "https:";
+    const protocol = isHttps ? "wss:" : "ws:";
+    return `${protocol}//${window.location.host}/ws`;
+  }
+
+  return "ws://localhost:8000/ws";
+}
 
 /**
  * Owns the WebSocket connection to the routing backend: connects, parses every
@@ -23,7 +45,20 @@ export function useLiveSolution() {
 
   const connect = useCallback(() => {
     setConnectionStatus("connecting");
-    const ws = new WebSocket(WS_URL);
+    let ws: WebSocket;
+
+    try {
+      const url = getWebSocketUrl();
+      ws = new WebSocket(url);
+    } catch (err) {
+      console.warn("useLiveSolution: unable to construct WebSocket", err);
+      setConnectionStatus("closed");
+      if (!unmountedRef.current) {
+        reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);
+      }
+      return;
+    }
+
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -66,8 +101,11 @@ export function useLiveSolution() {
     };
 
     ws.onerror = () => {
-      // onclose fires right after and drives the reconnect loop.
-      ws.close();
+      try {
+        ws.close();
+      } catch {
+        // ignore
+      }
     };
   }, [applySolutionUpdate, setConnectionStatus, setInitialState, updateVehiclePosition]);
 
@@ -80,7 +118,11 @@ export function useLiveSolution() {
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       const ws = wsRef.current;
       wsRef.current = null;
-      ws?.close();
+      try {
+        ws?.close();
+      } catch {
+        // ignore
+      }
     };
   }, [connect]);
 
