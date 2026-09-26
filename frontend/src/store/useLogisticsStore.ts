@@ -184,6 +184,7 @@ export interface LogisticsState {
   reassignToVehicle: (fromVehicleId: string, toVehicleId: string) => void;
   resolveAccident: (eventId: string) => void;
   clearAccidents: () => void;
+  addParcel: (parcel: Parcel) => void;
 }
 
 // Jaipur delivery locations
@@ -354,6 +355,7 @@ export const useLogisticsStore = create<LogisticsState>((set, get) => ({
     })),
 
   clearAccidents: () => set({ accidentEvents: [] }),
+  addParcel: (parcel) => set((state) => ({ parcels: [parcel, ...state.parcels] })),
 }));
 
 export function seedParcels(vehicleIds: string[]) {

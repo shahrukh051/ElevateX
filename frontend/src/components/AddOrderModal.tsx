@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
 import type { ClientMessage, Stop } from "../types";
+import { useLogisticsStore, type Parcel } from "../store/useLogisticsStore";
+import { useRouteStore } from "../store/useRouteStore";
 
 interface AddOrderModalProps {
   isOpen: boolean;
@@ -11,20 +13,36 @@ interface AddOrderModalProps {
 const DEFAULT_LAT = "26.9157";
 const DEFAULT_LNG = "75.8189";
 
+const JAIPUR_PRESETS = [
+  { name: "NIMS University", lat: "27.1855", lng: "75.9870" },
+  { name: "Sindhi Camp", lat: "26.9248", lng: "75.8016" },
+  { name: "Railway Station", lat: "26.9200", lng: "75.7878" },
+  { name: "GT Mall", lat: "26.8536", lng: "75.8055" },
+  { name: "WTP Jaipur", lat: "26.8530", lng: "75.8050" },
+  { name: "Hawa Mahal", lat: "26.9239", lng: "75.8267" },
+  { name: "Mansarovar", lat: "26.8550", lng: "75.7650" },
+  { name: "Malviya Nagar", lat: "26.8530", lng: "75.8135" },
+];
+
 function nowPlusHours(h: number): string {
   const d = new Date(Date.now() + h * 3600 * 1000);
-  // datetime-local format: YYYY-MM-DDTHH:MM
   return d.toISOString().slice(0, 16);
 }
 
 export default function AddOrderModal({ isOpen, onClose, sendMessage }: AddOrderModalProps) {
   const [lat, setLat] = useState(DEFAULT_LAT);
   const [lng, setLng] = useState(DEFAULT_LNG);
+  const [selectedPreset, setSelectedPreset] = useState("Sindhi Camp");
   const [windowStart, setWindowStart] = useState(() => nowPlusHours(0.5));
   const [windowEnd, setWindowEnd] = useState(() => nowPlusHours(4));
   const [priority, setPriority] = useState<"high" | "normal">("high");
   const [demand, setDemand] = useState("1");
+  const [customerName, setCustomerName] = useState("Aarav Singhania");
+  const [itemDescription, setItemDescription] = useState("Urgent Express Delivery");
   const [submitted, setSubmitted] = useState(false);
+
+  const addParcel = useLogisticsStore((s) => s.addParcel);
+  const vehicles = useRouteStore((s) => s.vehicles);
 
   const latNum = parseFloat(lat);
   const lngNum = parseFloat(lng);
@@ -34,6 +52,8 @@ export default function AddOrderModal({ isOpen, onClose, sendMessage }: AddOrder
 
   const handleSubmit = useCallback(() => {
     if (!isValid) return;
+
+    // Send to backend routing solver
     const stop: Omit<Stop, "id"> = {
       lat: latNum,
       lng: lngNum,
@@ -43,19 +63,59 @@ export default function AddOrderModal({ isOpen, onClose, sendMessage }: AddOrder
       demand: parseInt(demand, 10) || 1,
     };
     sendMessage({ type: "trigger_new_order", stop });
+
+    // Pick first active vehicle or V-01 for immediate manifest assignment
+    const targetVehicle = vehicles.find((v) => v.status === "active")?.id || "V-01";
+    const newOrderId = `CR-JPR-${Math.floor(100 + Math.random() * 900)}`;
+
+    const newParcel: Parcel = {
+      id: `PKG-${Date.now().toString().slice(-4)}`,
+      orderId: newOrderId,
+      description: itemDescription || "Express Delivery Package",
+      weight: `${(parseFloat(demand) * 1.2).toFixed(1)} kg`,
+      destination: selectedPreset || `Jaipur (${latNum.toFixed(3)}, ${lngNum.toFixed(3)})`,
+      destinationLat: latNum,
+      destinationLng: lngNum,
+      status: "in_transit",
+      priority,
+      estimatedDelivery: new Date(Date.now() + 30 * 60000).toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }) + " IST",
+      customer: customerName || "Customer",
+      vehicleId: targetVehicle,
+    };
+
+    addParcel(newParcel);
     setSubmitted(true);
+
     setTimeout(() => {
       setSubmitted(false);
       onClose();
-      // reset for next use
+      // Reset form
       setLat(DEFAULT_LAT);
       setLng(DEFAULT_LNG);
       setWindowStart(nowPlusHours(0.5));
       setWindowEnd(nowPlusHours(4));
       setPriority("high");
       setDemand("1");
-    }, 1200);
-  }, [isValid, latNum, lngNum, windowStart, windowEnd, priority, demand, sendMessage, onClose]);
+    }, 1000);
+  }, [
+    isValid,
+    latNum,
+    lngNum,
+    windowStart,
+    windowEnd,
+    priority,
+    demand,
+    itemDescription,
+    selectedPreset,
+    customerName,
+    vehicles,
+    sendMessage,
+    addParcel,
+    onClose,
+  ]);
 
   if (!isOpen) return null;
 
@@ -66,16 +126,16 @@ export default function AddOrderModal({ isOpen, onClose, sendMessage }: AddOrder
         {/* Header */}
         <div className="modal__header">
           <div className="modal__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
             </svg>
           </div>
           <div>
-            <h2 className="modal__title">Add New Order (Jaipur)</h2>
-            <p className="modal__subtitle">Select a landmark or set coordinates — the system will re-optimize routes automatically.</p>
+            <h2 className="modal__title">Create Priority Delivery Order</h2>
+            <p className="modal__subtitle">Dispatch a new shipment across Jaipur with real-time route optimization</p>
           </div>
-          <button className="modal__close" onClick={onClose} aria-label="Close">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <button className="modal__close" onClick={onClose} aria-label="Close modal">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
@@ -84,151 +144,158 @@ export default function AddOrderModal({ isOpen, onClose, sendMessage }: AddOrder
         {/* Body */}
         <div className="modal__body">
 
-          {/* Location section */}
+          {/* Quick Jaipur Landmark Presets */}
           <div className="modal__section">
             <div className="modal__section-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
                 <circle cx="12" cy="10" r="3"/>
               </svg>
-              Delivery Location in Jaipur
+              Select Jaipur Delivery Hub
             </div>
-            <div className="modal__hint">
-              Quick presets for key Jaipur destinations:
+            <div className="modal__presets-grid">
+              {JAIPUR_PRESETS.map((p) => {
+                const isActive = lat === p.lat && lng === p.lng;
+                return (
+                  <button
+                    key={p.name}
+                    type="button"
+                    className={`modal__preset-chip ${isActive ? "modal__preset-chip--active" : ""}`}
+                    onClick={() => {
+                      setLat(p.lat);
+                      setLng(p.lng);
+                      setSelectedPreset(p.name);
+                    }}
+                  >
+                    📍 {p.name}
+                  </button>
+                );
+              })}
             </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-              {[
-                { name: "NIMS University", lat: "27.1855", lng: "75.9870" },
-                { name: "Sindhi Camp", lat: "26.9248", lng: "75.8016" },
-                { name: "Railway Station", lat: "26.9200", lng: "75.7878" },
-                { name: "GT Mall", lat: "26.8536", lng: "75.8055" },
-                { name: "WTP Jaipur", lat: "26.8530", lng: "75.8050" },
-                { name: "Hawa Mahal", lat: "26.9239", lng: "75.8267" },
-                { name: "Mansarovar", lat: "26.8550", lng: "75.7650" },
-              ].map((p) => (
-                <button
-                  key={p.name}
-                  type="button"
-                  style={{
-                    background: lat === p.lat && lng === p.lng ? "#2563eb" : "rgba(255,255,255,0.06)",
-                    border: lat === p.lat && lng === p.lng ? "1px solid #3b82f6" : "1px solid rgba(255,255,255,0.12)",
-                    borderRadius: 6,
-                    color: lat === p.lat && lng === p.lng ? "#ffffff" : "#94a3b8",
-                    padding: "5px 10px",
-                    fontSize: 11,
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    transition: "all 0.15s ease",
-                  }}
-                  onClick={() => { setLat(p.lat); setLng(p.lng); }}
-                >
-                  📍 {p.name}
-                </button>
-              ))}
-            </div>
-            <div className="modal__coord-row">
-              <div className="modal__field">
-                <label htmlFor="modal-lat" className="modal__field-label">Latitude</label>
-                <input
-                  id="modal-lat"
-                  type="number"
-                  step="0.0001"
-                  placeholder="e.g. 26.9248"
-                  value={lat}
-                  onChange={(e) => setLat(e.target.value)}
-                  className={`modal__input ${lat && !isValidLat ? "modal__input--error" : ""}`}
-                />
-              </div>
-              <div className="modal__field">
-                <label htmlFor="modal-lng" className="modal__field-label">Longitude</label>
-                <input
-                  id="modal-lng"
-                  type="number"
-                  step="0.0001"
-                  placeholder="e.g. 75.8016"
-                  value={lng}
-                  onChange={(e) => setLng(e.target.value)}
-                  className={`modal__input ${lng && !isValidLng ? "modal__input--error" : ""}`}
-                />
-              </div>
-            </div>
-
-            {/* Live preview badge */}
-            {isValidLat && isValidLng && (
-              <div className="modal__preview">
-                <span className="modal__preview-dot" />
-                Pin will be placed at {latNum.toFixed(4)}°N, {lngNum.toFixed(4)}°E
-              </div>
-            )}
           </div>
 
-          {/* Time window section */}
-          <div className="modal__section">
-            <div className="modal__section-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-              Delivery Window
+          {/* Coordinates row */}
+          <div className="modal__coord-row">
+            <div className="modal__field">
+              <label htmlFor="modal-lat" className="modal__field-label">Latitude</label>
+              <input
+                id="modal-lat"
+                type="number"
+                step="0.0001"
+                placeholder="26.9157"
+                value={lat}
+                onChange={(e) => {
+                  setLat(e.target.value);
+                  setSelectedPreset("");
+                }}
+                className={`modal__input ${lat && !isValidLat ? "modal__input--error" : ""}`}
+              />
             </div>
-            <div className="modal__time-row">
-              <div className="modal__field">
-                <label htmlFor="modal-start" className="modal__field-label">Earliest</label>
-                <input
-                  id="modal-start"
-                  type="datetime-local"
-                  value={windowStart}
-                  onChange={(e) => setWindowStart(e.target.value)}
-                  className="modal__input"
-                />
-              </div>
-              <div className="modal__field">
-                <label htmlFor="modal-end" className="modal__field-label">Latest</label>
-                <input
-                  id="modal-end"
-                  type="datetime-local"
-                  value={windowEnd}
-                  onChange={(e) => setWindowEnd(e.target.value)}
-                  className="modal__input"
-                />
-              </div>
+            <div className="modal__field">
+              <label htmlFor="modal-lng" className="modal__field-label">Longitude</label>
+              <input
+                id="modal-lng"
+                type="number"
+                step="0.0001"
+                placeholder="75.8189"
+                value={lng}
+                onChange={(e) => {
+                  setLng(e.target.value);
+                  setSelectedPreset("");
+                }}
+                className={`modal__input ${lng && !isValidLng ? "modal__input--error" : ""}`}
+              />
+            </div>
+          </div>
+
+          {/* Customer & Item */}
+          <div className="modal__coord-row">
+            <div className="modal__field">
+              <label htmlFor="modal-customer" className="modal__field-label">Recipient Name</label>
+              <input
+                id="modal-customer"
+                type="text"
+                placeholder="Customer Name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="modal__input"
+              />
+            </div>
+            <div className="modal__field">
+              <label htmlFor="modal-item" className="modal__field-label">Package Description</label>
+              <input
+                id="modal-item"
+                type="text"
+                placeholder="Electronics, Apparel, Medicine…"
+                value={itemDescription}
+                onChange={(e) => setItemDescription(e.target.value)}
+                className="modal__input"
+              />
             </div>
           </div>
 
           {/* Priority & Demand */}
-          <div className="modal__section">
-            <div className="modal__section-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-              </svg>
-              Order Details
+          <div className="modal__details-row">
+            <div className="modal__field">
+              <label htmlFor="modal-priority" className="modal__field-label">Delivery Priority</label>
+              <select
+                id="modal-priority"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as "high" | "normal")}
+                className="modal__input"
+              >
+                <option value="high">🔴 High Priority (Express Dispatch)</option>
+                <option value="normal">🔵 Standard Delivery</option>
+              </select>
             </div>
-            <div className="modal__details-row">
-              <div className="modal__field">
-                <label htmlFor="modal-priority" className="modal__field-label">Priority</label>
-                <select
-                  id="modal-priority"
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as "high" | "normal")}
-                  className="modal__input"
-                >
-                  <option value="high">🔴 High priority</option>
-                  <option value="normal">🔵 Normal</option>
-                </select>
-              </div>
-              <div className="modal__field">
-                <label htmlFor="modal-demand" className="modal__field-label">Demand (units)</label>
-                <input
-                  id="modal-demand"
-                  type="number"
-                  min="1"
-                  max="8"
-                  value={demand}
-                  onChange={(e) => setDemand(e.target.value)}
-                  className="modal__input"
-                />
-              </div>
+            <div className="modal__field">
+              <label htmlFor="modal-demand" className="modal__field-label">Weight / Units (1-8)</label>
+              <input
+                id="modal-demand"
+                type="number"
+                min="1"
+                max="8"
+                value={demand}
+                onChange={(e) => setDemand(e.target.value)}
+                className="modal__input"
+              />
             </div>
           </div>
+
+          {/* Time window section */}
+          <div className="modal__time-row">
+            <div className="modal__field">
+              <label htmlFor="modal-start" className="modal__field-label">Earliest Delivery Time</label>
+              <input
+                id="modal-start"
+                type="datetime-local"
+                value={windowStart}
+                onChange={(e) => setWindowStart(e.target.value)}
+                className="modal__input"
+              />
+            </div>
+            <div className="modal__field">
+              <label htmlFor="modal-end" className="modal__field-label">Latest Deadline</label>
+              <input
+                id="modal-end"
+                type="datetime-local"
+                value={windowEnd}
+                onChange={(e) => setWindowEnd(e.target.value)}
+                className="modal__input"
+              />
+            </div>
+          </div>
+
+          {/* Live pin preview */}
+          {isValidLat && isValidLng && (
+            <div className="modal__preview">
+              <span className="modal__preview-dot" />
+              <span>
+                Coordinates locked: <strong>{latNum.toFixed(4)}°N, {lngNum.toFixed(4)}°E</strong> (
+                {selectedPreset || "Custom Location"})
+              </span>
+            </div>
+          )}
 
         </div>
 
@@ -246,17 +313,17 @@ export default function AddOrderModal({ isOpen, onClose, sendMessage }: AddOrder
           >
             {submitted ? (
               <>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
-                Order submitted!
+                <span>Order Created & Dispatched!</span>
               </>
             ) : (
               <>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
                 </svg>
-                Add order & re-optimize
+                <span>Add Order & Optimize Route</span>
               </>
             )}
           </button>
