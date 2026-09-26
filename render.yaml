@@ -23,3 +23,7 @@ services:
           type: web
           name: elevatex-backend
           property: host
+      - key: VITE_GOOGLE_MAPS_KEY
+        sync: false   # Set manually in Render dashboard — never commit the real key
+      - key: VITE_GOOGLE_MAPS_MAP_ID
+        sync: false   # Optional — needed for vector/cloud-based map styles
