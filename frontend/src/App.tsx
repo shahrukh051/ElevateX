@@ -1,175 +1,191 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLiveSolution } from "./hooks/useLiveSolution";
 import { useRouteStore } from "./store/useRouteStore";
-import MapView from "./components/MapView";
-import VehicleList from "./components/VehicleList";
-import QuickActions from "./components/QuickActions";
-import MapLayers from "./components/MapLayers";
+import { useLogisticsStore, seedParcels } from "./store/useLogisticsStore";
+import TrackPage from "./components/TrackPage";
+import OrdersPage from "./components/OrdersPage";
+import DisruptionsPage from "./components/DisruptionsPage";
 import AddOrderModal from "./components/AddOrderModal";
 import "./App.css";
+
+type Page = "track" | "orders" | "disruptions";
 
 export default function App() {
   const { sendMessage } = useLiveSolution();
   const connectionStatus = useRouteStore((s) => s.connectionStatus);
   const vehicles = useRouteStore((s) => s.vehicles);
-  const currentSolution = useRouteStore((s) => s.currentSolution);
+  const parcels = useLogisticsStore((s) => s.parcels);
+  const accidentEvents = useLogisticsStore((s) => s.accidentEvents);
+  const [activePage, setActivePage] = useState<Page>("track");
   const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState("");
 
+  const activeIncidentCount = accidentEvents.filter((e) => e.status !== "resolved").length;
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) + " IST";
 
-  // Pick first active route for the "Active Delivery" card
-  const activeRoute = currentSolution?.routes?.[0];
-  const activeVehicle = vehicles.find((v) => v.id === activeRoute?.vehicleId);
+  // Seed parcels when vehicles load
+  useEffect(() => {
+    if (vehicles.length > 0 && parcels.length === 0) {
+      seedParcels(vehicles.map((v) => v.id));
+    }
+  }, [vehicles.length]);
 
   return (
-    <div className="app">
-
-      {/* ── Logo sidebar ── */}
-      <nav className="app__nav">
-        <div className="app__nav-logo">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#ff6b35" stroke="#ff6b35" strokeWidth="1" strokeLinejoin="round"/>
-          </svg>
-        </div>
-      </nav>
-
-      {/* ── Vehicle panel ── */}
-      <aside className="app__vehicle-panel">
-        {/* Panel header */}
-        <div className="vp__header">
-          <div className="vp__breadcrumb">LIVE FLEET / JAIPUR</div>
-          <div className="vp__title-row">
-            <h2 className="vp__title">Vehicle overview</h2>
-            <span className="vp__count">{vehicles.length} vehicles</span>
-          </div>
-          <div className="vp__status-row">
-            <span className={`vp__status-dot vp__status-dot--${connectionStatus}`} />
-            <span className="vp__status-text">
-              {connectionStatus === "open" ? "Live" : connectionStatus === "connecting" ? "Connecting…" : "Disconnected"}
-            </span>
-            {connectionStatus === "open" && <span className="vp__sys-badge">System operational</span>}
-          </div>
-          <div className="vp__search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+    <div className="saas-app-container">
+      {/* ── Left Slim Dark Rail (Image 4) ── */}
+      <aside className="saas-dark-rail">
+        {/* Top Logo */}
+        <div className="rail-logo" title="ElevateX Logistics Platform">
+          <div className="rail-logo-box">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="2" width="9" height="9" rx="2.5" fill="#10b981" />
+              <rect x="13" y="2" width="9" height="9" rx="2.5" fill="#3b82f6" />
+              <rect x="2" y="13" width="9" height="9" rx="2.5" fill="#8b5cf6" />
+              <rect x="13" y="13" width="9" height="9" rx="2.5" fill="#f59e0b" />
             </svg>
-            <input type="text" placeholder="Search fleet" />
           </div>
         </div>
-        {/* Vehicle list */}
-        <div className="vp__list">
-          <VehicleList />
+
+        {/* Navigation Rail Buttons */}
+        <nav className="rail-nav">
+          {/* 1. Track / Live Map */}
+          <button
+            className={`rail-nav-btn ${activePage === "track" ? "rail-nav-btn--active" : ""}`}
+            onClick={() => setActivePage("track")}
+            title="Live Dispatch & Map"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+              <line x1="8" y1="2" x2="8" y2="18"/>
+              <line x1="16" y1="6" x2="16" y2="22"/>
+            </svg>
+            <span className="rail-tooltip">Dispatch Map</span>
+          </button>
+
+          {/* 2. Orders & Parcels */}
+          <button
+            className={`rail-nav-btn ${activePage === "orders" ? "rail-nav-btn--active" : ""}`}
+            onClick={() => setActivePage("orders")}
+            title="Orders & Parcel Manifest"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1" y="3" width="15" height="13"/>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/>
+              <circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+            <span className="rail-badge">{parcels.length || 24}</span>
+            <span className="rail-tooltip">Orders</span>
+          </button>
+
+          {/* 3. Incidents / Disruptions */}
+          <button
+            className={`rail-nav-btn ${activePage === "disruptions" ? "rail-nav-btn--active" : ""}`}
+            onClick={() => setActivePage("disruptions")}
+            title="Breakdowns & Accident Center"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            {activeIncidentCount > 0 && (
+              <span className="rail-badge rail-badge--danger">{activeIncidentCount}</span>
+            )}
+            <span className="rail-tooltip">Disruptions</span>
+          </button>
+        </nav>
+
+        {/* Bottom Rail Profile & Settings */}
+        <div className="rail-bottom">
+          <div className="rail-avatar-wrap" title="Admin: Daniel Osonuga">
+            <img
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=faces"
+              alt="Admin"
+              className="rail-avatar"
+            />
+            <span className="rail-avatar-dot" />
+          </div>
+          <button className="rail-settings-btn" title="Platform Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
         </div>
       </aside>
 
-      {/* ── Map area ── */}
-      <main className="app__map">
-        {/* Top header bar */}
-        <div className="map__topbar">
-          <div className="map__topbar-left">
-            <span className="map__breadcrumb">OPERATIONS / JAIPUR, INDIA</span>
-            <h1 className="map__title">Last-Mile Route Control</h1>
+      {/* ── Main App Content Area ── */}
+      <div className="saas-main-area">
+        {/* Top Header Bar (Image 1 & 4) */}
+        <header className="saas-top-header">
+          {/* Search Box */}
+          <div className="sth-search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search trips, orders, couriers, Jaipur destinations…"
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              className="sth-search-input"
+            />
           </div>
-          <div className="map__topbar-right">
-            <div className="map__search-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-              </svg>
-              <input type="text" placeholder="Search Jaipur route" />
+
+          {/* Right Status & Actions */}
+          <div className="sth-right-group">
+            {/* Live Connection & Fleet Status */}
+            <div className="sth-status-chip">
+              <span className={`sth-status-dot ${connectionStatus === "open" ? "sth-status-dot--live" : ""}`} />
+              <span className="sth-status-label">
+                {connectionStatus === "open" ? "Live Telemetry" : "Connecting…"}
+              </span>
+              <span className="sth-status-divider">·</span>
+              <span className="sth-status-fleet">{vehicles.length} Vehicles Online</span>
             </div>
+
+            {/* Current Time */}
+            <div className="sth-clock-chip">
+              {timeStr}
+            </div>
+
+            {/* Add Order Button */}
             <button
               id="open-add-order-btn"
-              className="map__add-btn"
+              className="sth-add-order-btn"
               onClick={() => setOrderModalOpen(true)}
-              title="Add new delivery order"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
+              <span>New Order</span>
             </button>
-          </div>
-        </div>
 
-        {/* Map itself */}
-        <div className="map__canvas">
-          <MapView />
-
-          {/* Active Delivery overlay */}
-          {activeRoute && activeVehicle && (
-            <div className="map__active-card">
-              <div className="mac__header">
-                <span className="mac__label">ACTIVE DELIVERY / JAIPUR</span>
-              </div>
-              <div className="mac__order-id">{activeRoute.vehicleId}</div>
-              <div className="mac__route">Jaipur → {activeRoute.stopIds?.[0] ?? "En Route"}</div>
-              <div className="mac__stats">
-                <div className="mac__stat">
-                  <span className="mac__stat-label">Route state</span>
-                  <span className="mac__stat-val mac__stat-val--active">ACTIVE</span>
-                </div>
-                <div className="mac__stat">
-                  <span className="mac__stat-label">Stops</span>
-                  <span className="mac__stat-val">{activeRoute.stopIds?.length ?? 0} / {activeRoute.stopIds?.length ?? 0}</span>
-                </div>
-                <div className="mac__stat">
-                  <span className="mac__stat-label">ETA</span>
-                  <span className="mac__stat-val">{timeStr}</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Bottom order info bar */}
-        {activeRoute && (
-          <div className="map__bottom-bar">
-            <div className="mbb__id">
-              <span className="mbb__order-id">{activeRoute.vehicleId}</span>
-              <span className="mbb__status">EN ROUTE</span>
-            </div>
-            <div className="mbb__col">
-              <span className="mbb__label">FROM</span>
-              <span className="mbb__val">Jaipur International Airport</span>
-            </div>
-            <div className="mbb__col">
-              <span className="mbb__label">TO</span>
-              <span className="mbb__val">Vaishali Nagar, Jaipur</span>
-            </div>
-            <div className="mbb__col">
-              <span className="mbb__label">CURRENT LOCATION</span>
-              <span className="mbb__val">Malviya Nagar</span>
-            </div>
-            <div className="mbb__col">
-              <span className="mbb__label">REMAINING / UPDATE</span>
-              <span className="mbb__val">6.8 km · 4 min ago</span>
+            {/* User Profile Pill (Image 1) */}
+            <div className="sth-profile-pill">
+              <span className="sth-avatar-circle">DO</span>
+              <span className="sth-user-name">Daniel Osonuga</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
             </div>
           </div>
-        )}
-      </main>
+        </header>
 
-      {/* ── Right operations panel ── */}
-      <aside className="app__ops-panel">
-        <div className="ops__header">
-          <div className="ops__section-label">QUICK ACTIONS</div>
-          <div className="ops__title">Operations</div>
-          <div className="ops__subtitle">Keep Jaipur routes clear and fleet information synchronized.</div>
-        </div>
+        {/* Dynamic Page Component */}
+        <main className="saas-body-view">
+          {activePage === "track" && <TrackPage sendMessage={sendMessage} />}
+          {activePage === "orders" && <OrdersPage />}
+          {activePage === "disruptions" && <DisruptionsPage sendMessage={sendMessage} />}
+        </main>
+      </div>
 
-        <div className="ops__actions">
-          <QuickActions sendMessage={sendMessage} />
-        </div>
-
-        <div className="ops__last-synced">LAST SYNCED · {timeStr}</div>
-
-        <div className="ops__layers-header">MAP LAYERS</div>
-        <div className="ops__layers">
-          <MapLayers />
-        </div>
-      </aside>
-
-      {/* ── Modal ── */}
+      {/* Add Order Modal */}
       <AddOrderModal
         isOpen={orderModalOpen}
         onClose={() => setOrderModalOpen(false)}

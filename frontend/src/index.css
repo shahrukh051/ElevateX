@@ -1,119 +1,179 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 :root {
-  --bg:             #0d1117;
-  --bg-secondary:   #0a0d13;
-  --panel:          #111827;
-  --panel-raised:   #161f2e;
-  --panel-hover:    #1a2436;
-  --border:         rgba(255,255,255,0.07);
-  --border-bright:  rgba(255,255,255,0.12);
-  --text:           #e2e8f0;
-  --text-dim:       #64748b;
-  --text-muted:     #475569;
+  /* Surface & Base */
+  --bg-app:         #f1f5f9;
+  --bg-surface:     #ffffff;
+  --bg-subtle:      #f8fafc;
+  --bg-muted:       #f1f5f9;
+  --bg-dark-rail:   #0f172a;
+  --bg-dark-rail-hover: #1e293b;
 
-  --accent-live:    #10b981;
-  --accent-alert:   #f59e0b;
-  --accent-danger:  #ef4444;
-  --accent-info:    #3b82f6;
-  --accent-purple:  #8b5cf6;
+  /* Borders */
+  --border-light:   #e2e8f0;
+  --border-subtle:  #edf2f7;
+  --border-focus:   #3b82f6;
 
-  --glow-live:      rgba(16,185,129,0.15);
-  --glow-info:      rgba(59,130,246,0.15);
-  --glow-danger:    rgba(239,68,68,0.15);
+  /* Typography */
+  --text-main:      #0f172a;
+  --text-heading:   #1e293b;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --text-on-dark:   #f8fafc;
 
-  --radius-sm:  4px;
-  --radius:     8px;
-  --radius-lg:  12px;
+  /* Accent Colors */
+  --emerald:        #10b981;
+  --emerald-dark:   #059669;
+  --emerald-light:  #ecfdf5;
+  --emerald-border: #a7f3d0;
 
-  --font-ui:   "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+  --amber:          #f59e0b;
+  --amber-dark:     #d97706;
+  --amber-light:    #fffbeb;
+  --amber-border:   #fde68a;
 
-  --sidebar-w: 260px;
-  --right-w:   290px;
-  --header-h:  48px;
+  --rose:           #ef4444;
+  --rose-dark:      #dc2626;
+  --rose-light:     #fef2f2;
+  --rose-border:    #fecaca;
+
+  --blue:           #3b82f6;
+  --blue-dark:      #2563eb;
+  --blue-light:     #eff6ff;
+  --blue-border:    #bfdbfe;
+
+  --purple:         #8b5cf6;
+  --purple-light:   #f5f3ff;
+  --purple-border:  #ddd6fe;
+
+  /* Shadow Elevation */
+  --shadow-xs:      0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm:      0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md:      0 6px 18px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg:      0 14px 28px -4px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+  --shadow-floating:0 20px 35px -5px rgba(15, 23, 42, 0.12), 0 8px 16px -4px rgba(15, 23, 42, 0.06);
+
+  /* Radii */
+  --radius-xs:      4px;
+  --radius-sm:      8px;
+  --radius-md:      12px;
+  --radius-lg:      16px;
+  --radius-xl:      20px;
+  --radius-pill:    9999px;
+
+  /* Typography Families */
+  --font-display:   "Plus Jakarta Sans", "Inter", -apple-system, sans-serif;
+  --font-ui:        "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono:      "JetBrains Mono", monospace;
 }
 
-*, *::before, *::after { box-sizing: border-box; }
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
 html, body, #root {
   height: 100%;
+  width: 100%;
   margin: 0;
+  padding: 0;
   overflow: hidden;
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--bg-app);
+  color: var(--text-main);
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
   font-size: 13px;
 }
 
-button, input, select {
-  font-family: inherit;
-  font-size: 12px;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
-:focus-visible {
-  outline: 2px solid var(--accent-info);
-  outline-offset: 2px;
-}
-
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-
-/* ── Utility ─────────────────────────────────────── */
-.label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.badge {
+/* Base Pill Badge */
+.pill-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 10px;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
-.badge--active {
-  background: rgba(16,185,129,0.15);
-  color: var(--accent-live);
-  border: 1px solid rgba(16,185,129,0.3);
+.pill-badge--green {
+  background: var(--emerald-light);
+  color: var(--emerald-dark);
+  border: 1px solid var(--emerald-border);
 }
 
-.badge--unavailable {
-  background: rgba(239,68,68,0.12);
-  color: var(--accent-danger);
-  border: 1px solid rgba(239,68,68,0.25);
+.pill-badge--amber {
+  background: var(--amber-light);
+  color: var(--amber-dark);
+  border: 1px solid var(--amber-border);
 }
 
-.dot-pulse {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent-live);
-  box-shadow: 0 0 0 0 var(--glow-live);
-  animation: pulse 2s infinite;
-  flex-shrink: 0;
+.pill-badge--rose {
+  background: var(--rose-light);
+  color: var(--rose-dark);
+  border: 1px solid var(--rose-border);
 }
 
-@keyframes pulse {
-  0%   { box-shadow: 0 0 0 0   rgba(16,185,129,0.4); }
-  70%  { box-shadow: 0 0 0 6px rgba(16,185,129,0);   }
-  100% { box-shadow: 0 0 0 0   rgba(16,185,129,0);   }
+.pill-badge--blue {
+  background: var(--blue-light);
+  color: var(--blue-dark);
+  border: 1px solid var(--blue-border);
 }
 
-.section-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 14px 0;
+.pill-badge--purple {
+  background: var(--purple-light);
+  color: #6d28d9;
+  border: 1px solid var(--purple-border);
+}
+
+.pill-badge--slate {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+/* Radar pulse animation for active tracking */
+@keyframes radar-pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  70% { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+}
+
+@keyframes flow-dash {
+  to { stroke-dashoffset: -30; }
+}
+
+.flow-dash {
+  animation: flow-dash 1.2s linear infinite;
 }
