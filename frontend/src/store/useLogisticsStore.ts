@@ -50,11 +50,30 @@ export interface DriverProfile {
   destHub: string;
 }
 
+export function generateDriverAvatar(name: string, bg1: string, bg2: string): string {
+  const parts = name.trim().split(" ");
+  const initials = parts.length > 1
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : parts[0].slice(0, 2).toUpperCase();
+  const idSafe = name.replace(/[^a-zA-Z0-9]/g, "_");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+    <defs>
+      <linearGradient id="g_${idSafe}" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${bg1}"/>
+        <stop offset="100%" stop-color="${bg2}"/>
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="50" fill="url(#g_${idSafe})"/>
+    <text x="50" y="55" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" font-size="36" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">${initials}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 export const DRIVER_PROFILES: Record<string, DriverProfile> = {
   "V-01": {
     id: "V-01",
     name: "Rajesh Sharma",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&h=120&fit=crop&crop=faces",
+    avatar: generateDriverAvatar("Rajesh Sharma", "#2563eb", "#1d4ed8"),
     vehicleType: "Tata Ace Electric Van",
     plate: "RJ 14 GA 3218",
     phone: "+91 98290 14820",
@@ -66,7 +85,7 @@ export const DRIVER_PROFILES: Record<string, DriverProfile> = {
   "V-02": {
     id: "V-02",
     name: "Priya Meena",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&h=120&fit=crop&crop=faces",
+    avatar: generateDriverAvatar("Priya Meena", "#059669", "#047857"),
     vehicleType: "Mahindra Treo EV Van",
     plate: "RJ 14 EA 9921",
     phone: "+91 94140 33819",
@@ -78,7 +97,7 @@ export const DRIVER_PROFILES: Record<string, DriverProfile> = {
   "V-03": {
     id: "V-03",
     name: "Vikram Singh",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop&crop=faces",
+    avatar: generateDriverAvatar("Vikram Singh", "#7c3aed", "#6d28d9"),
     vehicleType: "Hero Electric Cargo Bike",
     plate: "RJ 14 CJ 5510",
     phone: "+91 98281 77312",
@@ -90,7 +109,7 @@ export const DRIVER_PROFILES: Record<string, DriverProfile> = {
   "V-04": {
     id: "V-04",
     name: "Neha Yadav",
-    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&h=120&fit=crop&crop=faces",
+    avatar: generateDriverAvatar("Neha Yadav", "#d97706", "#b45309"),
     vehicleType: "Piaggio Ape E-City Delivery",
     plate: "RJ 14 TC 1042",
     phone: "+91 98292 90114",
@@ -102,7 +121,7 @@ export const DRIVER_PROFILES: Record<string, DriverProfile> = {
   "V-05": {
     id: "V-05",
     name: "Imran Khan",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=faces",
+    avatar: generateDriverAvatar("Imran Khan", "#0284c7", "#0369a1"),
     vehicleType: "Tata Intra V30 Cargo",
     plate: "RJ 14 LA 8871",
     phone: "+91 94141 62901",
@@ -114,7 +133,7 @@ export const DRIVER_PROFILES: Record<string, DriverProfile> = {
   "V-06": {
     id: "V-06",
     name: "Kavita Saini",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop&crop=faces",
+    avatar: generateDriverAvatar("Kavita Saini", "#db2777", "#be185d"),
     vehicleType: "Ather 450X Express Delivery",
     plate: "RJ 14 EV 4419",
     phone: "+91 98293 88120",
@@ -126,7 +145,7 @@ export const DRIVER_PROFILES: Record<string, DriverProfile> = {
   "V-07": {
     id: "V-07",
     name: "Deepak Verma",
-    avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&h=120&fit=crop&crop=faces",
+    avatar: generateDriverAvatar("Deepak Verma", "#4f46e5", "#4338ca"),
     vehicleType: "Ashok Leyland Bada Dost",
     plate: "RJ 14 KA 7731",
     phone: "+91 94142 55904",
@@ -138,7 +157,7 @@ export const DRIVER_PROFILES: Record<string, DriverProfile> = {
   "V-08": {
     id: "V-08",
     name: "Sunita Joshi",
-    avatar: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=120&h=120&fit=crop&crop=faces",
+    avatar: generateDriverAvatar("Sunita Joshi", "#0d9488", "#0f766e"),
     vehicleType: "TVS iQube Electric Scooter",
     plate: "RJ 14 MX 2098",
     phone: "+91 98294 11209",
@@ -156,7 +175,7 @@ export function getDriverProfile(vehicleId: string): DriverProfile {
   return {
     id: vehicleId,
     name: `Driver ${vehicleId}`,
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&h=120&fit=crop&crop=faces",
+    avatar: generateDriverAvatar(vehicleId, "#475569", "#334155"),
     vehicleType: "Electric Delivery Van",
     plate: `RJ 14 ${vehicleId.replace("-", "")}`,
     phone: "+91 98290 00000",

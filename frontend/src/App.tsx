@@ -175,11 +175,7 @@ export default function App() {
         {/* Bottom Rail Profile & Settings */}
         <div className="rail-bottom">
           <div className="rail-avatar-wrap" title="ElevateX Ops">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&crop=faces"
-              alt="Admin"
-              className="rail-avatar"
-            />
+            <div className="rail-avatar rail-avatar--brand">EX</div>
             <span className="rail-avatar-dot" />
           </div>
           <button className="rail-settings-btn" title="Platform Settings">

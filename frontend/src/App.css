@@ -164,6 +164,18 @@
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
+.rail-avatar--brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
+
 .rail-avatar-dot {
   position: absolute;
   bottom: 0;
