@@ -12,7 +12,12 @@ interface RouteState {
   pendingStopIds: string[];
 
   setInitialState: (stops: Stop[], vehicles: Vehicle[], solution: Solution) => void;
-  applySolutionUpdate: (solution: Solution, explanation: ExplanationEvent) => void;
+  applySolutionUpdate: (
+    solution: Solution,
+    explanation: ExplanationEvent,
+    vehicles?: Vehicle[],
+    stops?: Stop[]
+  ) => void;
   updateVehiclePosition: (vehicleId: string, lat: number, lng: number, bearing?: number) => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
   addPendingStop: (stop: Omit<Stop, "id">) => void;
@@ -34,18 +39,22 @@ export const useRouteStore = create<RouteState>((set) => ({
   setInitialState: (stops, vehicles, solution) =>
     set({ stops, vehicles, currentSolution: solution }),
 
-  applySolutionUpdate: (solution, explanation) =>
+  applySolutionUpdate: (solution, explanation, vehicles, stops) =>
     set((state) => {
       const serverStopId = explanation.message.match(/P-[A-F0-9]+/)?.[0];
       const pendingId = state.pendingStopIds[0];
+      let updatedStops = stops || state.stops;
+      if (serverStopId && pendingId) {
+        updatedStops = updatedStops.map((stop) =>
+          stop.id === pendingId ? { ...stop, id: serverStopId, priority: "high" } : stop
+        );
+      }
       return {
         currentSolution: solution,
-        // Append-only: newest explanation goes to the front, nothing is ever dropped.
         explanationFeed: [explanation, ...state.explanationFeed],
+        vehicles: vehicles || state.vehicles,
+        stops: updatedStops,
         pendingStopIds: serverStopId && pendingId ? state.pendingStopIds.slice(1) : state.pendingStopIds,
-        stops: serverStopId && pendingId
-          ? state.stops.map((stop) => stop.id === pendingId ? { ...stop, id: serverStopId, priority: "high" } : stop)
-          : state.stops,
       };
     }),
 

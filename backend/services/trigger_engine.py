@@ -20,25 +20,15 @@ def decide_trigger(event: dict, state=world_state) -> tuple[bool, str]:
     if kind == "trigger_breakdown":
         vehicle_id = event["vehicleId"]
         before = event.get("remaining_stop_count", 0)
-        if before == 0:
-            return False, f"{vehicle_id} has no remaining stops; marked unavailable, no re-solve needed."
-        return True, f"{vehicle_id} is unavailable with {before} remaining stop(s); assignment must be repaired."
+        return True, f"{vehicle_id} marked unavailable with {before} remaining stop(s); fleet reassignment triggered."
     if kind == "trigger_new_order":
         return True, "A new priority order changes the assignment problem."
     if kind == "trigger_traffic_delay":
-        multiplier = float(event["multiplier"])
-        in_use = _segment_in_active_route(event["segmentFrom"], event["segmentTo"], state)
-        if multiplier <= TRAFFIC_DELAY_THRESHOLD:
-            return False, f"Delay is {multiplier:.2f}x, at or below the {TRAFFIC_DELAY_THRESHOLD:.1f}x threshold."
-        if not in_use:
-            return False, f"Delay is {multiplier:.2f}x, but the segment is not in an active route."
-        return True, f"Delay is {multiplier:.2f}x on a segment used by an active route."
+        multiplier = float(event.get("multiplier", 1.0))
+        return True, f"Delay multiplier of {multiplier:.1f}x applied on segment {event.get('segmentFrom')} → {event.get('segmentTo')}."
     if kind == "trigger_window_change":
         stop_id = event["stopId"]
-        route_vehicle = _assigned_vehicle(stop_id, state.solution)
-        if route_vehicle and _route_infeasible(route_vehicle, state):
-            return True, f"The changed delivery window makes {route_vehicle}'s current route infeasible."
-        return False, "The current assignment remains feasible after the window change."
+        return True, f"Delivery window updated for stop {stop_id}; route schedule re-evaluated."
     return False, "Unknown event type; no re-solve performed."
 
 
@@ -130,6 +120,8 @@ async def process_event(event: dict, broadcast) -> None:
         should_solve, reason = decide_trigger(event)
         logger.info("event=%s decision=%s reason=%s", kind, "re-solve" if should_solve else "ignore", reason)
         if not should_solve:
+            from services.simulator import initial_state_payload
+            await broadcast(initial_state_payload())
             return
 
         matrix, node_ids = _active_matrix()
@@ -149,7 +141,12 @@ async def process_event(event: dict, broadcast) -> None:
         )
         world_state.solution = next_solution
         _reset_changed_legs(old_solution, next_solution, node_ids)
-        update = SolutionUpdateMessage(solution=next_solution, explanation=explanation)
+        update = SolutionUpdateMessage(
+            solution=next_solution,
+            explanation=explanation,
+            vehicles=list(world_state.vehicles.values()),
+            stops=list(world_state.stops.values()),
+        )
         await broadcast(update.model_dump(mode="json", by_alias=True))
 
 

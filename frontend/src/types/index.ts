@@ -39,7 +39,7 @@ export interface ExplanationEvent {
 
 // WebSocket messages from backend (discriminated union)
 export type ServerMessage =
-  | { type: "solution_update"; solution: Solution; explanation: ExplanationEvent }
+  | { type: "solution_update"; solution: Solution; explanation: ExplanationEvent; vehicles?: Vehicle[]; stops?: Stop[] }
   | { type: "vehicle_position"; vehicleId: string; lat: number; lng: number; bearing?: number }
   | { type: "initial_state"; stops: Stop[]; vehicles: Vehicle[]; solution: Solution };
 

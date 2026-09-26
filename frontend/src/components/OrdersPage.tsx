@@ -105,38 +105,68 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
+      {/* Summary KPI Cards — Clean icons, no emojis */}
       <div className="op-kpi-grid">
         <div className="op-kpi-card">
-          <div className="op-kpi-icon-wrap op-kpi-icon-wrap--blue">📦</div>
+          <div className="op-kpi-icon-wrap op-kpi-icon-wrap--blue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+            </svg>
+          </div>
           <div>
             <div className="op-kpi-val">{totalParcels}</div>
             <div className="op-kpi-lbl">Total Manifest</div>
           </div>
         </div>
+
         <div className="op-kpi-card">
-          <div className="op-kpi-icon-wrap op-kpi-icon-wrap--green">🚚</div>
+          <div className="op-kpi-icon-wrap op-kpi-icon-wrap--green">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1" y="3" width="15" height="13"/>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/>
+              <circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+          </div>
           <div>
             <div className="op-kpi-val">{inTransit}</div>
             <div className="op-kpi-lbl">Active in Transit</div>
           </div>
         </div>
+
         <div className="op-kpi-card">
-          <div className="op-kpi-icon-wrap op-kpi-icon-wrap--purple">↩️</div>
+          <div className="op-kpi-icon-wrap op-kpi-icon-wrap--purple">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+          </div>
           <div>
             <div className="op-kpi-val">{reassigned}</div>
             <div className="op-kpi-lbl">Auto-Reassigned</div>
           </div>
         </div>
+
         <div className="op-kpi-card">
-          <div className="op-kpi-icon-wrap op-kpi-icon-wrap--emerald">✅</div>
+          <div className="op-kpi-icon-wrap op-kpi-icon-wrap--emerald">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
           <div>
             <div className="op-kpi-val">{delivered}</div>
             <div className="op-kpi-lbl">Delivered</div>
           </div>
         </div>
+
         <div className="op-kpi-card">
-          <div className="op-kpi-icon-wrap op-kpi-icon-wrap--slate">🛵</div>
+          <div className="op-kpi-icon-wrap op-kpi-icon-wrap--slate">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+            </svg>
+          </div>
           <div>
             <div className="op-kpi-val">{vehicles.length}</div>
             <div className="op-kpi-lbl">Jaipur Fleet</div>
@@ -144,7 +174,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      {/* Vehicle Manifest Blocks (Image 2 Operations List inspired) */}
+      {/* Vehicle Manifest Blocks */}
       <div className="op-vehicle-blocks">
         {vehicleData.map(({ vehicle, profile, vParcels, capacityPct, color, hasAccident }) => {
           const visibleParcels = vParcels.filter((p) => {
@@ -172,17 +202,24 @@ export default function OrdersPage() {
                       <span className="op-vehicle-chip" style={{ borderColor: color }}>
                         {vehicle.id}
                       </span>
-                      {hasAccident && <span className="op-accident-badge">🚨 Collision Reported</span>}
+                      {hasAccident && (
+                        <span className="op-accident-badge">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                          </svg>
+                          Collision Reported
+                        </span>
+                      )}
                     </div>
                     <div className="op-vehicle-model">
-                      {profile.vehicleType} · {profile.plate} · ⭐ {profile.rating}
+                      {profile.vehicleType} &middot; {profile.plate}
                     </div>
                   </div>
                 </div>
 
                 <div className="op-block-meta">
                   <div className="op-route-tag">
-                    {profile.originHub} → {profile.destHub}
+                    {profile.originHub} &rarr; {profile.destHub}
                   </div>
                   <div className="op-capacity-box">
                     <div className="op-cap-bar-track">
@@ -226,13 +263,13 @@ export default function OrdersPage() {
                           </td>
                           <td className="op-cell-desc">{parcel.description}</td>
                           <td className="op-cell-dest">
-                            📍 {parcel.destination}
+                            {parcel.destination}
                           </td>
                           <td className="op-cell-weight">{parcel.weight}</td>
                           <td className="op-cell-eta">{parcel.estimatedDelivery}</td>
                           <td>
                             <span className={`pill-badge ${parcel.priority === "high" ? "pill-badge--amber" : "pill-badge--slate"}`}>
-                              {parcel.priority === "high" ? "⚡ Urgent" : "Normal"}
+                              {parcel.priority === "high" ? "Urgent" : "Normal"}
                             </span>
                           </td>
                           <td>

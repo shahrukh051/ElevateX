@@ -104,13 +104,19 @@ export default function TrackPage({ sendMessage }: TrackPageProps) {
       {/* ── Top Floating Accident Notification ── */}
       {accidentAlert && (
         <div className="track-emergency-banner">
-          <div className="teb-icon">🚨</div>
+          <div className="teb-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
           <div className="teb-body">
             <div className="teb-title">
-              VEHICLE BREAKDOWN DETECTED · {accidentAlert.vehicleId}
+              VEHICLE BREAKDOWN DETECTED &middot; {accidentAlert.vehicleId}
             </div>
             <div className="teb-desc">
-              Nearest driver <strong>{accidentAlert.reassignedTo}</strong> ({accidentAlert.nearestDist} km away) identified from {accidentAlert.nearbyCount} nearby partners. {accidentAlert.parcelsCount} parcels ready for automatic pickup & delivery.
+              Nearest driver <strong>{accidentAlert.reassignedTo}</strong> ({accidentAlert.nearestDist} km away) identified from {accidentAlert.nearbyCount} nearby partners. {accidentAlert.parcelsCount} parcels ready for automatic pickup &amp; delivery.
             </div>
           </div>
           <button
@@ -122,11 +128,12 @@ export default function TrackPage({ sendMessage }: TrackPageProps) {
               }
             }}
           >
-            ⚡ Auto-Dispatch Now
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            Auto-Dispatch Now
           </button>
-          <button className="teb-close" onClick={() => setAccidentAlert(null)}>
-            ✕
-          </button>
+          <button className="teb-close" onClick={() => setAccidentAlert(null)}>&times;</button>
         </div>
       )}
 
@@ -207,7 +214,7 @@ export default function TrackPage({ sendMessage }: TrackPageProps) {
             if (hasAccident) {
               statusBadge = (
                 <span className="pill-badge pill-badge--rose">
-                  🚨 Breakdown
+                  Breakdown
                 </span>
               );
             } else if (vehicle.status !== "active") {
@@ -231,7 +238,7 @@ export default function TrackPage({ sendMessage }: TrackPageProps) {
                     {statusBadge}
                   </div>
                   <span className="ts-card-parcels-count">
-                    📦 {vehicleParcels.length} parcels
+                    {vehicleParcels.length} parcels
                   </span>
                 </div>
 
@@ -289,9 +296,9 @@ export default function TrackPage({ sendMessage }: TrackPageProps) {
                 {/* Footer Metric */}
                 <div className="ts-card-footer">
                   <span className="ts-footer-eta">
-                    🕐 ET/D: 25 mins (14.2 km)
+                    ETD: 25 min &middot; 14.2 km
                   </span>
-                  <span className="ts-footer-arrow">›</span>
+                  <span className="ts-footer-arrow">&rsaquo;</span>
                 </div>
               </div>
             );

@@ -167,7 +167,7 @@ export default function AddOrderModal({ isOpen, onClose, sendMessage }: AddOrder
                       setSelectedPreset(p.name);
                     }}
                   >
-                    📍 {p.name}
+                    {p.name}
                   </button>
                 );
               })}

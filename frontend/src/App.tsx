@@ -13,9 +13,9 @@ import "./App.css";
 type Page = "overview" | "track" | "orders" | "disruptions";
 
 const PAGE_TITLES: Record<Page, string> = {
-  overview: "Fleet Overview",
-  track: "Live Dispatch Map",
-  orders: "Fleet Manifest",
+  overview: "CRM Dashboard",
+  track: "Shipments & Live Dispatch",
+  orders: "Orders & Manifest",
   disruptions: "Disruption Control",
 };
 
@@ -31,15 +31,14 @@ export default function App() {
   const [liveTime, setLiveTime] = useState("--:--:-- IST");
   const [clockSynced, setClockSynced] = useState(false);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const syncedBaseRef = useRef<number | null>(null); // server epoch ms at sync time
-  const syncedAtRef = useRef<number | null>(null);   // local performance.now() at sync time
+  const syncedBaseRef = useRef<number | null>(null);
+  const syncedAtRef = useRef<number | null>(null);
 
   const activeIncidentCount = accidentEvents.filter((e) => e.status !== "resolved").length;
 
   // TimeAPI-synced live clock
   useEffect(() => {
     function formatIST(epochMs: number): string {
-      // IST = UTC + 5h30m
       const istMs = epochMs + 5.5 * 60 * 60 * 1000;
       const d = new Date(istMs);
       const hh = String(d.getUTCHours()).padStart(2, "0");
@@ -55,7 +54,6 @@ export default function App() {
           const elapsed = performance.now() - syncedAtRef.current;
           setLiveTime(formatIST(syncedBaseRef.current + elapsed));
         } else {
-          // fallback: local time
           setLiveTime(
             new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + " IST"
           );
@@ -63,7 +61,6 @@ export default function App() {
       }, 1000);
     }
 
-    // Fetch accurate time from TimeAPI
     fetch("https://timeapi.io/api/v1/time/current/utc")
       .then((res) => res.json())
       .then((data: { utc_time: string }) => {
@@ -75,7 +72,6 @@ export default function App() {
         startTicking();
       })
       .catch(() => {
-        // API failed — fall back to local clock
         setClockSynced(false);
         startTicking();
       });
@@ -92,197 +88,165 @@ export default function App() {
 
   return (
     <div className="saas-app-container">
-      {/* ── Left Slim Dark Rail (Image 4) ── */}
-      <aside className="saas-dark-rail">
-        {/* Top Logo */}
-        <div className="rail-logo" title="ElevateX Logistics Platform">
-          <div className="rail-logo-box">
+      {/* ── Left Modern Light Sidebar (Parclgo style) ── */}
+      <aside className="parcl-sidebar">
+        {/* Brand Header */}
+        <div className="parcl-logo-wrap" onClick={() => setActivePage("overview")} role="button" tabIndex={0}>
+          <div className="parcl-logo-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <rect x="2" y="2" width="9" height="9" rx="2.5" fill="#10b981" />
-              <rect x="13" y="2" width="9" height="9" rx="2.5" fill="#3b82f6" />
-              <rect x="2" y="13" width="9" height="9" rx="2.5" fill="#8b5cf6" />
-              <rect x="13" y="13" width="9" height="9" rx="2.5" fill="#f59e0b" />
+              <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#ff5a22"/>
+              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#ff5a22" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <span className="rail-brand-label">EX</span>
+          <div className="parcl-brand-text">
+            <span className="parcl-brand-name">Elevate<strong>X</strong></span>
+          </div>
         </div>
 
-        {/* Navigation Rail Buttons */}
-        <nav className="rail-nav">
-          {/* 0. Overview / Dashboard */}
+        {/* Navigation list */}
+        <nav className="parcl-nav">
           <button
-            className={`rail-nav-btn ${activePage === "overview" ? "rail-nav-btn--active" : ""}`}
+            className={`parcl-nav-item ${activePage === "overview" ? "parcl-nav-item--active" : ""}`}
             onClick={() => setActivePage("overview")}
-            title="Fleet Overview Dashboard"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
             </svg>
-            <span className="rail-tooltip">Overview</span>
+            <span>Dashboard</span>
           </button>
 
-          {/* 1. Track / Live Map */}
           <button
-            className={`rail-nav-btn ${activePage === "track" ? "rail-nav-btn--active" : ""}`}
-            onClick={() => setActivePage("track")}
-            title="Live Dispatch & Map"
+            className={`parcl-nav-item ${activePage === "orders" ? "parcl-nav-item--active" : ""}`}
+            onClick={() => setActivePage("orders")}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+            </svg>
+            <span>Orders</span>
+            {parcels.length > 0 && <span className="parcl-nav-badge">{parcels.length}</span>}
+          </button>
+
+          <button
+            className={`parcl-nav-item ${activePage === "track" ? "parcl-nav-item--active" : ""}`}
+            onClick={() => setActivePage("track")}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
               <line x1="8" y1="2" x2="8" y2="18"/>
               <line x1="16" y1="6" x2="16" y2="22"/>
             </svg>
-            <span className="rail-tooltip">Dispatch Map</span>
+            <span>Shipments</span>
           </button>
 
-          {/* 2. Orders & Parcels */}
           <button
-            className={`rail-nav-btn ${activePage === "orders" ? "rail-nav-btn--active" : ""}`}
-            onClick={() => setActivePage("orders")}
-            title="Orders & Parcel Manifest"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="1" y="3" width="15" height="13"/>
-              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-              <circle cx="5.5" cy="18.5" r="2.5"/>
-              <circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
-            {parcels.length > 0 && <span className="rail-badge">{parcels.length}</span>}
-            <span className="rail-tooltip">Orders</span>
-          </button>
-
-          {/* 3. Incidents / Disruptions */}
-          <button
-            className={`rail-nav-btn ${activePage === "disruptions" ? "rail-nav-btn--active" : ""}`}
+            className={`parcl-nav-item ${activePage === "disruptions" ? "parcl-nav-item--active" : ""}`}
             onClick={() => setActivePage("disruptions")}
-            title="Breakdowns & Accident Center"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
               <line x1="12" y1="9" x2="12" y2="13"/>
               <line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
+            <span>Disruptions</span>
             {activeIncidentCount > 0 && (
-              <span className="rail-badge rail-badge--danger">{activeIncidentCount}</span>
+              <span className="parcl-nav-badge parcl-nav-badge--danger">{activeIncidentCount}</span>
             )}
-            <span className="rail-tooltip">Disruptions</span>
           </button>
         </nav>
 
-        {/* Bottom Rail Profile & Settings */}
-        <div className="rail-bottom">
-          <div className="rail-avatar-wrap" title="ElevateX Ops">
-            <div className="rail-avatar rail-avatar--brand">EX</div>
-            <span className="rail-avatar-dot" />
-          </div>
-          <button className="rail-settings-btn" title="Platform Settings">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        {/* Promo / Fleet Assistant card matching parclgo reference */}
+        <div className="parcl-promo-card">
+          <div className="parcl-promo-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff5a22" strokeWidth="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
             </svg>
+          </div>
+          <h4 className="parcl-promo-title">Deliver smarter, Grow Faster</h4>
+          <p className="parcl-promo-sub">Track every delivery easily.</p>
+          <button className="parcl-promo-btn" onClick={() => setActivePage("track")}>
+            Live Map
           </button>
+        </div>
+
+        {/* Bottom User Profile */}
+        <div className="parcl-user-row">
+          <div className="parcl-user-avatar">EX</div>
+          <div className="parcl-user-meta">
+            <span className="parcl-user-name">ElevateX</span>
+            <span className="parcl-user-role">Jaipur Fleet Ops</span>
+          </div>
         </div>
       </aside>
 
       {/* ── Main App Content Area ── */}
       <div className="saas-main-area">
-        {/* Top Header Bar (Image 1 & 4) */}
-        <header className="saas-top-header">
+        {/* Top Header Bar */}
+        <header className="parcl-top-header">
           {/* Page Title */}
-          <div className="sth-page-title">
-            <span className="sth-page-icon">
-              {activePage === "overview" && (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                  <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                </svg>
-              )}
-              {activePage === "track" && (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-                </svg>
-              )}
-              {activePage === "orders" && (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <rect x="1" y="3" width="15" height="13"/>
-                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-                </svg>
-              )}
-              {activePage === "disruptions" && (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                </svg>
-              )}
-            </span>
-            <h1 className="sth-page-name">{PAGE_TITLES[activePage]}</h1>
+          <div className="pth-left">
+            <h1 className="pth-title">{PAGE_TITLES[activePage]}</h1>
           </div>
 
           {/* Search Box */}
-          <div className="sth-search-box">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2">
+          <div className="pth-search-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2">
               <circle cx="11" cy="11" r="8"/>
               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input
               type="text"
-              placeholder="Search trips, orders, couriers, Jaipur destinations…"
+              placeholder="Search order ID, customer, phone…"
               value={globalSearch}
               onChange={(e) => setGlobalSearch(e.target.value)}
-              className="sth-search-input"
+              className="pth-search-input"
             />
           </div>
 
           {/* Right Status & Actions */}
-          <div className="sth-right-group">
+          <div className="pth-right">
             {/* Live Connection & Fleet Status */}
-            <div className="sth-status-chip">
-              <span className={`sth-status-dot ${connectionStatus === "open" ? "sth-status-dot--live" : ""}`} />
-              <span className="sth-status-label">
-                {connectionStatus === "open" ? "Live Telemetry" : "Connecting…"}
+            <div className="pth-telemetry">
+              <span className={`pth-dot ${connectionStatus === "open" ? "pth-dot--live" : ""}`} />
+              <span className="pth-telemetry-text">
+                {connectionStatus === "open" ? "Live" : "Connecting"} · {vehicles.length} Vehicles
               </span>
-              <span className="sth-status-divider">·</span>
-              <span className="sth-status-fleet">{vehicles.length} Vehicles Online</span>
             </div>
 
             {/* Current Time — synced from timeapi.io */}
-            <div className="sth-clock-chip" title={clockSynced ? "Synced from timeapi.io" : "Local clock (API unavailable)"}>
-              <span className={`sth-clock-sync-dot ${clockSynced ? "sth-clock-sync-dot--synced" : "sth-clock-sync-dot--local"}`} />
+            <div className="pth-clock" title={clockSynced ? "Synced from timeapi.io" : "Local clock"}>
               {liveTime}
             </div>
 
             {/* Live Weather Pill from OpenWeatherMap */}
             <HeaderWeatherPill />
 
-            {/* Add Order Button */}
+            {/* Add Order Button — Vibrant Orange Button */}
             <button
               id="open-add-order-btn"
-              className="sth-add-order-btn"
+              className="pth-add-btn"
               onClick={() => setOrderModalOpen(true)}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
               <span>New Order</span>
             </button>
-
-            {/* User Profile Pill (Image 1) */}
-            <div className="sth-profile-pill">
-              <span className="sth-avatar-circle">EX</span>
-              <span className="sth-user-name">ElevateX</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5">
-                <path d="M6 9l6 6 6-6"/>
-              </svg>
-            </div>
           </div>
         </header>
 
         {/* Dynamic Page Component */}
         <main className="saas-body-view">
-          {activePage === "overview" && <OverviewPage onNavigate={setActivePage} sendMessage={sendMessage} />}
+          {activePage === "overview" && (
+            <OverviewPage
+              onNavigate={setActivePage}
+              sendMessage={sendMessage}
+              onOpenOrderModal={() => setOrderModalOpen(true)}
+            />
+          )}
           {activePage === "track" && <TrackPage sendMessage={sendMessage} />}
           {activePage === "orders" && <OrdersPage />}
           {activePage === "disruptions" && <DisruptionsPage sendMessage={sendMessage} />}

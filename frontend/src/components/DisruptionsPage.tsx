@@ -1,60 +1,75 @@
+import { useState } from "react";
 import { useRouteStore } from "../store/useRouteStore";
 import { useLogisticsStore, seedParcels } from "../store/useLogisticsStore";
 import { useWeather } from "../hooks/useWeather";
 import type { ClientMessage } from "../types";
-import { useState } from "react";
-
-const DRIVER_NAMES = [
-  "Arjun Sharma", "Priya Meena", "Rakesh Kumawat",
-  "Neha Yadav", "Imran Khan", "Kavita Saini",
-  "Deepak Verma", "Sunita Joshi",
-];
-
 
 interface DisruptionsPageProps {
   sendMessage: (msg: ClientMessage) => void;
 }
 
+const DRIVER_NAMES = [
+  "Rajesh Sharma",
+  "Priya Meena",
+  "Vikram Singh",
+  "Sunita Verma",
+  "Amit Choudhary",
+  "Pooja Joshi",
+  "Deepak Saini",
+  "Kavita Rathore",
+];
+
 export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
   const vehicles = useRouteStore((s) => s.vehicles);
   const stops = useRouteStore((s) => s.stops);
   const currentSolution = useRouteStore((s) => s.currentSolution);
-  const { parcels, accidentEvents, triggerAccident, resolveAccident, clearAccidents } =
+  const { parcels, accidentEvents, triggerAccident, clearAccidents, resolveAccident } =
     useLogisticsStore();
-
-  const sortedIds = [...vehicles.map((v) => v.id)].sort();
-  const activeVehicles = vehicles.filter((v) => v.status === "active");
-
-  const activeSegments = (currentSolution?.routes ?? []).flatMap((route) => {
-    if (!activeVehicles.some((v) => v.id === route.vehicleId)) return [];
-    const chain = [route.vehicleId, ...route.stopIds];
-    return chain.slice(0, -1).map((from, i) => ({ from, to: chain[i + 1] }));
-  });
-
-  // Breakdown
-  const [breakdownVehicleId, setBreakdownVehicleId] = useState("");
-  const [accidentAlert, setAccidentAlert] = useState<string | null>(null);
-
-  // Traffic delay
-  const [segmentFrom, setSegmentFrom] = useState("");
-  const [segmentTo, setSegmentTo] = useState("");
-  const [multiplier, setMultiplier] = useState("2.5");
-  const selectedSegmentIsActive = activeSegments.some(
-    (s) => s.from === segmentFrom && s.to === segmentTo
-  );
-
-  // Weather & Road Impact
   const { weather, loading: weatherLoading } = useWeather("Jaipur");
+
+  const [accidentAlert, setAccidentAlert] = useState<string | null>(null);
   const [weatherAlert, setWeatherAlert] = useState<string | null>(null);
 
-  function simulateWeatherImpact(severity: "monsoon" | "fog") {
-    if (activeSegments.length === 0) {
-      setWeatherAlert("No active delivery segments found to apply weather slowdown to.");
-      setTimeout(() => setWeatherAlert(null), 5000);
-      return;
+  // Breakdown simulation
+  const [breakdownVehicleId, setBreakdownVehicleId] = useState("");
+  const activeVehicles = vehicles.filter((v) => v.status === "active");
+  const sortedIds = [...vehicles.map((v) => v.id)].sort();
+
+  // Traffic delay
+  const activeSegments = (currentSolution?.routes ?? []).flatMap((r) => {
+    const list: { from: string; to: string; label: string }[] = [];
+    const stopIds = r.stopIds ?? [];
+    if (stopIds.length > 0) {
+      list.push({
+        from: r.vehicleId,
+        to: stopIds[0],
+        label: `${r.vehicleId} → ${stopIds[0]}`,
+      });
+      for (let i = 0; i < stopIds.length - 1; i++) {
+        list.push({
+          from: stopIds[i],
+          to: stopIds[i + 1],
+          label: `${stopIds[i]} → ${stopIds[i + 1]}`,
+        });
+      }
     }
+    return list;
+  });
+
+  const [segmentFrom, setSegmentFrom] = useState("");
+  const [segmentTo, setSegmentTo] = useState("");
+  const [multiplier, setMultiplier] = useState("2.0");
+
+  const selectedSegmentIsActive =
+    segmentFrom &&
+    segmentTo &&
+    activeSegments.some((s) => s.from === segmentFrom && s.to === segmentTo);
+
+  // Meteorological Disruption simulation
+  function simulateWeatherImpact(severity: "monsoon" | "fog") {
+    if (activeSegments.length === 0) return;
+    const target = activeSegments[Math.floor(Math.random() * activeSegments.length)];
     const mult = severity === "monsoon" ? 2.5 : 1.8;
-    const target = activeSegments[0];
     sendMessage({
       type: "trigger_traffic_delay",
       segmentFrom: target.from,
@@ -63,8 +78,8 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
     });
     setWeatherAlert(
       severity === "monsoon"
-        ? `🌧️ Monsoon Downpour simulated on ${target.from} → ${target.to} (2.5x travel time). Re-routing in progress!`
-        : `🌫️ Dense Fog simulated on ${target.from} → ${target.to} (1.8x travel time). Safety buffers increased!`
+        ? `Monsoon Downpour simulated on ${target.from} → ${target.to} (2.5x travel time). Re-routing in progress.`
+        : `Dense Fog simulated on ${target.from} → ${target.to} (1.8x travel time). Safety buffers increased.`
     );
     setTimeout(() => setWeatherAlert(null), 7000);
   }
@@ -122,24 +137,36 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
 
       {accidentAlert && (
         <div className="disruptions-alert">
-          <span>⚠️</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
           <span>{accidentAlert}</span>
-          <button onClick={() => setAccidentAlert(null)}>✕</button>
+          <button onClick={() => setAccidentAlert(null)}>&times;</button>
         </div>
       )}
 
       {weatherAlert && (
         <div className="disruptions-alert disruptions-alert--cyan">
-          <span>⛅</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+          </svg>
           <span>{weatherAlert}</span>
-          <button onClick={() => setWeatherAlert(null)}>✕</button>
+          <button onClick={() => setWeatherAlert(null)}>&times;</button>
         </div>
       )}
 
       <div className="disruptions-grid">
         {/* Vehicle Breakdown */}
         <div className="disr-card disr-card--danger">
-          <div className="disr-card__icon">🚨</div>
+          <div className="disr-card__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
           <div className="disr-card__title">Vehicle Breakdown / Accident</div>
           <div className="disr-card__desc">
             Trigger a breakdown. The nearest available vehicle will automatically pick up all parcels and continue the route.
@@ -164,13 +191,18 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
             disabled={!breakdownVehicleId}
             onClick={handleBreakdown}
           >
-            🚨 Trigger Breakdown
+            Trigger Breakdown
           </button>
         </div>
 
         {/* Traffic Delay */}
         <div className="disr-card disr-card--amber">
-          <div className="disr-card__icon">🚦</div>
+          <div className="disr-card__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
           <div className="disr-card__title">Traffic Delay</div>
           <div className="disr-card__desc">
             Apply a traffic multiplier to a route segment, forcing re-optimization.
@@ -178,25 +210,28 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
           <div className="disr-card__body">
             <select
               id="traffic-segment"
-              value={`${segmentFrom}|${segmentTo}`}
+              value={segmentFrom && segmentTo ? `${segmentFrom}|${segmentTo}` : ""}
               onChange={(e) => {
-                const [from, to] = e.target.value.split("|");
-                setSegmentFrom(from ?? "");
-                setSegmentTo(to ?? "");
+                const [f, t] = e.target.value.split("|");
+                setSegmentFrom(f || "");
+                setSegmentTo(t || "");
               }}
               className="disr-select"
             >
-              <option value="|">Select route segment…</option>
-              {activeSegments.map((seg, i) => (
-                <option key={`${seg.from}-${seg.to}-${i}`} value={`${seg.from}|${seg.to}`}>
-                  {seg.from} → {seg.to}
+              <option value="">Select route segment…</option>
+              {activeSegments.map((s, idx) => (
+                <option key={`${s.from}-${s.to}-${idx}`} value={`${s.from}|${s.to}`}>
+                  {s.label}
                 </option>
               ))}
             </select>
             <input
               id="traffic-multiplier"
-              placeholder="Multiplier (e.g. 2.5)"
-              inputMode="decimal"
+              type="number"
+              step="0.5"
+              min="1"
+              max="10"
+              placeholder="Multiplier (e.g. 2.0)"
               value={multiplier}
               onChange={(e) => setMultiplier(e.target.value)}
               className="disr-input"
@@ -216,13 +251,18 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
               });
             }}
           >
-            🚦 Apply Traffic Delay
+            Apply Traffic Delay
           </button>
         </div>
 
         {/* New Priority Order */}
         <div className="disr-card disr-card--blue">
-          <div className="disr-card__icon">📦</div>
+          <div className="disr-card__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+            </svg>
+          </div>
           <div className="disr-card__title">New Priority Order</div>
           <div className="disr-card__desc">
             Add an urgent delivery order. The system will re-optimize routes immediately.
@@ -233,7 +273,7 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
               <input id="order-lng" placeholder="Lng (e.g. 75.8189)" inputMode="decimal" value={orderLng} onChange={(e) => setOrderLng(e.target.value)} className="disr-input" />
             </div>
             <select id="order-priority" value={orderPriority} onChange={(e) => setOrderPriority(e.target.value as "normal" | "high")} className="disr-select">
-              <option value="high">⚡ High priority</option>
+              <option value="high">High priority</option>
               <option value="normal">Normal</option>
             </select>
             <input id="order-demand" placeholder="Demand units" inputMode="numeric" value={orderDemand} onChange={(e) => setOrderDemand(e.target.value)} className="disr-input" />
@@ -258,13 +298,18 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
               setOrderLat(""); setOrderLng("");
             }}
           >
-            📦 Add Priority Order
+            Add Priority Order
           </button>
         </div>
 
         {/* Window Change */}
         <div className="disr-card disr-card--purple">
-          <div className="disr-card__icon">🕐</div>
+          <div className="disr-card__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
           <div className="disr-card__title">Delivery Window Change</div>
           <div className="disr-card__desc">
             Update the delivery time window for a specific stop location.
@@ -298,13 +343,17 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
               });
             }}
           >
-            🕐 Update Window
+            Update Window
           </button>
         </div>
 
         {/* Weather Disruption Simulator */}
         <div className="disr-card disr-card--cyan">
-          <div className="disr-card__icon">⛈️</div>
+          <div className="disr-card__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+            </svg>
+          </div>
           <div className="disr-card__title">Live Weather & Road Condition</div>
           <div className="disr-card__desc">
             Monitor real-time OpenWeatherMap data for Jaipur and simulate meteorological delays on active routes.
@@ -318,11 +367,11 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
                   <span className={`dws-badge dws-badge--${weather.roadConditionClass}`}>{weather.roadCondition}</span>
                 </div>
                 <div className="dws-stats">
-                  <span>💧 {weather.humidity}% Hum</span>
+                  <span>Humidity: {weather.humidity}%</span>
                   <span>·</span>
-                  <span>💨 {weather.windSpeed} km/h</span>
+                  <span>Wind: {weather.windSpeed} km/h</span>
                   <span>·</span>
-                  <span>👁️ {weather.visibility} km Vis</span>
+                  <span>Visibility: {weather.visibility} km</span>
                 </div>
                 <div className="dws-advisory">{weather.fleetAdvisory}</div>
               </div>
@@ -340,7 +389,7 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
               disabled={activeSegments.length === 0}
               onClick={() => simulateWeatherImpact("monsoon")}
             >
-              🌧️ Simulate Monsoon (2.5x Delay)
+              Simulate Monsoon (2.5x Delay)
             </button>
             <button
               id="simulate-fog-btn"
@@ -349,7 +398,7 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
               disabled={activeSegments.length === 0}
               onClick={() => simulateWeatherImpact("fog")}
             >
-              🌫️ Simulate Fog (1.8x Delay)
+              Simulate Fog (1.8x Delay)
             </button>
           </div>
         </div>
@@ -359,7 +408,7 @@ export default function DisruptionsPage({ sendMessage }: DisruptionsPageProps) {
       {accidentEvents.length > 0 && (
         <div className="disruptions-log">
           <div className="disruptions-log__header">
-            <span>📋 INCIDENT LOG</span>
+            <span>INCIDENT LOG</span>
             <button className="disruptions-log__clear" onClick={clearAccidents}>Clear All</button>
           </div>
           {accidentEvents.map((evt) => (

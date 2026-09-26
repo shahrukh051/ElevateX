@@ -49,6 +49,8 @@ class SolutionUpdateMessage(BaseModel):
     type: Literal["solution_update"] = "solution_update"
     solution: Solution
     explanation: ExplanationEvent
+    vehicles: list[Vehicle] | None = None
+    stops: list[Stop] | None = None
 
 
 class VehiclePositionMessage(BaseModel):

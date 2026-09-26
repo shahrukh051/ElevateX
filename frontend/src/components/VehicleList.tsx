@@ -117,7 +117,7 @@ export default function VehicleList() {
 
         {(currentSolution?.unassignedStopIds?.length ?? 0) > 0 && (
           <li className="vehicle-list__unassigned">
-            ⚠ Needs dispatch:{" "}
+            Needs dispatch:{" "}
             {currentSolution?.unassignedStopIds.join(", ")}
           </li>
         )}

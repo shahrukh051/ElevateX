@@ -79,7 +79,7 @@ export function useLiveSolution() {
           setInitialState(message.stops, message.vehicles, message.solution);
           break;
         case "solution_update":
-          applySolutionUpdate(message.solution, message.explanation);
+          applySolutionUpdate(message.solution, message.explanation, message.vehicles, message.stops);
           break;
         case "vehicle_position":
           updateVehiclePosition(message.vehicleId, message.lat, message.lng, message.bearing);

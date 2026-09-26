@@ -223,7 +223,7 @@ function MapVehicleMarker({
             boxShadow: "0 2px 4px rgba(0,0,0,0.12)",
           }}
         >
-          {hasAccident ? `🚨 ${vehicle.id}` : vehicle.id}
+          {hasAccident ? `! ${vehicle.id}` : vehicle.id}
         </div>
       </div>
     </AdvancedMarker>
@@ -348,7 +348,7 @@ export default function MapView({ onSimulateAccident }: { onSimulateAccident?: (
               <span className="mfp-id-tag">{selectedVehicle.id}</span>
             </div>
             <p className="mfp-sub">
-              {activeAccident ? "🚨 Accident Reported" : "Online · Active Route"} · ⭐ {selectedProfile.rating}
+              {activeAccident ? "Incident Reported" : "Online · Active Route"}
             </p>
           </div>
         </div>
@@ -403,7 +403,7 @@ export default function MapView({ onSimulateAccident }: { onSimulateAccident?: (
       {activeAccident ? (
         <div className="mfp-accident-box">
           <div className="mfp-accident-header">
-            <span className="mfp-accident-badge">🚨 Collision / Breakdown</span>
+            <span className="mfp-accident-badge">Collision / Breakdown</span>
             <span className="mfp-accident-time">Just now</span>
           </div>
           <p className="mfp-accident-desc">
@@ -428,11 +428,11 @@ export default function MapView({ onSimulateAccident }: { onSimulateAccident?: (
                     <span className="mfp-cand-id">{candidate.id}</span>
                   </div>
                   <span className="mfp-cand-dist">
-                    📍 {candidate.distanceKm} km away · {candidate.vehicleType}
+                    {candidate.distanceKm} km away &middot; {candidate.vehicleType}
                   </span>
                 </div>
                 {idx === 0 ? (
-                  <span className="mfp-best-badge">Nearest ⚡</span>
+                  <span className="mfp-best-badge">Recommended</span>
                 ) : (
                   <button
                     className="mfp-assign-btn"
