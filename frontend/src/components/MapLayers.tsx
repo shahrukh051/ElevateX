@@ -16,7 +16,9 @@ export function setMapLayer(key: LayerKey, value: boolean) {
 
 export function subscribeMapLayers(fn: () => void) {
   _listeners.add(fn);
-  return () => _listeners.delete(fn);
+  return () => {
+    _listeners.delete(fn);
+  };
 }
 
 export default function MapLayers() {

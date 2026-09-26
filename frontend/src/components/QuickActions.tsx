@@ -23,7 +23,6 @@ export default function QuickActions({ sendMessage }: QuickActionsProps) {
   const [resetting, setResetting] = useState(false);
 
   const activeVehicles = vehicles.filter((v) => v.status === "active");
-  const hasUnavailable = vehicles.some((v) => v.status === "unavailable");
 
   const firstSegment = (currentSolution?.routes ?? [])
     .flatMap((route) => {

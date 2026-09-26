@@ -197,7 +197,9 @@ export default function MapView() {
 
   // Re-render whenever a MapLayers toggle changes
   const [layers, setLayers] = useState(getMapLayers());
-  useEffect(() => subscribeMapLayers(() => setLayers(getMapLayers())), []);
+  useEffect(() => {
+    return subscribeMapLayers(() => setLayers(getMapLayers()));
+  }, []);
 
   // Map mode: "vector" (custom high-fps SVG canvas) or "google" (Google Maps)
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY as string | undefined;
