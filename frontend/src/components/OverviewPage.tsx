@@ -1,5 +1,4 @@
-import { useState, useMemo } from "react";
-import { useRouteStore } from "../store/useRouteStore";
+import { useMemo } from "react";
 import { useLogisticsStore, getDriverProfile } from "../store/useLogisticsStore";
 import type { ClientMessage } from "../types";
 
@@ -12,15 +11,12 @@ interface OverviewPageProps {
 }
 
 export default function OverviewPage({ onNavigate, onOpenOrderModal }: OverviewPageProps) {
-  const vehicles = useRouteStore((s) => s.vehicles);
   const { parcels, accidentEvents } = useLogisticsStore();
 
-  const activeVehicles = vehicles.filter((v) => v.status === "active");
   const activeIncidents = accidentEvents.filter((e) => e.status !== "resolved");
 
   const inTransit = parcels.filter((p) => p.status === "in_transit").length;
   const delivered = parcels.filter((p) => p.status === "delivered").length;
-  const reassigned = parcels.filter((p) => p.status === "reassigned").length;
   const pending = parcels.filter((p) => p.status === "pending").length;
 
   const totalOrdersCount = parcels.length > 0 ? parcels.length : 72;
